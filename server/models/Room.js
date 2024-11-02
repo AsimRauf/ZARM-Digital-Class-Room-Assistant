@@ -18,7 +18,8 @@ const roomSchema = new mongoose.Schema({
   members: [{
       user: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'User'
+          ref: 'User',
+          unique: true
       },
       role: {
           type: String,
@@ -35,5 +36,7 @@ const roomSchema = new mongoose.Schema({
       default: Date.now
   }
 });
+
+roomSchema.index({ members: 1 }, { unique: true });
 
 module.exports = mongoose.model('Room', roomSchema);
