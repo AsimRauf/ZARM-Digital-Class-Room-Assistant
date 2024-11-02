@@ -62,40 +62,73 @@ const updateRoom = async (req, res) => {
     }
 };
 
-// Join a room using the invite code
-let isJoining = false; // Lock variable
-
 const joinRoom = async (req, res) => {
-    
-
-    isJoining = true; // Lock the process
-
     try {
-        const room = await Room.findOne({ inviteCode: req.params.inviteCode });
+        // Find and update the room, adding the user only if they aren't already a member
+        const room = await Room.findOneAndUpdate(
+            { inviteCode: req.params.inviteCode },
+            { $addToSet: { members: { user: req.user._id, role: 'member' } } }, // Add user to members if not already present
+            { new: true } // Return the updated document
+        );
+
+        // Check if the room was found
         if (!room) {
-            isJoining = false; // Unlock the process
             return res.status(404).json({ message: 'Room not found' });
         }
 
-        // Check if user is already a member
-        const isMember = room.members.some(member => member.user.toString() === req.user._id.toString());
-
-        if (!isMember) {
-            room.members.push({ user: req.user._id, role: 'member' });
-            await room.save();
-        } else {
-            console.log('User is already a member, no action taken.');
-        }
-
+        // Return the updated room data
         res.json(room);
     } catch (error) {
         console.error("Error joining room:", error);
-        res.status(500).json({ message: error.message });
-    } finally {
-        isJoining = false; // Unlock the process
+
+        // Additional error handling for unexpected issues
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
+
+// Add this new controller function
+const deleteRoom = async (req, res) => {
+    console.log('Deleting room with ID:', req.params.id);
+    try {
+        const room = await Room.findById(req.params.id);
+        
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        // Check if user is admin
+        if (room.admin.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Only room admin can delete rooms" });
+        }
+
+        await Room.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Room deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting room:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+//leave room
+const leaveRoom = async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        // Remove the user from the room's members list
+        room.members = room.members.filter(member => member.user.toString() !== req.user._id.toString());
+        await room.save();
+
+        res.status(200).json({ message: "Left the room successfully" });
+    } catch (error) {
+        console.error("Error leaving room:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 
@@ -103,5 +136,7 @@ module.exports = {
     createRoom,
     getUserRooms,
     updateRoom,
-    joinRoom
+    joinRoom,
+    deleteRoom,
+    leaveRoom
 };
