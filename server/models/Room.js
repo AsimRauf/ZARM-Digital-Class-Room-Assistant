@@ -1,42 +1,39 @@
 const mongoose = require('mongoose');
 
 const roomSchema = new mongoose.Schema({
-  name: {
-      type: String,
-      required: true,
-      trim: true
-  },
-  description: {
-      type: String,
-      trim: true
-  },
-  admin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-  },
-  members: [{
-      user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-          unique: true
-      },
-      role: {
-          type: String,
-          enum: ['admin', 'moderator', 'member'], // Fixed the typo here
-          default: 'member'
-      }
-  }],
-  inviteCode: {
-      type: String,
-      unique: true
-  },
-  createdAt: {
-      type: Date,
-      default: Date.now
-  }
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    description: {
+        type: String,
+        trim: true
+    },
+    admin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    members: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        role: {
+            type: String,
+            enum: ['admin', 'member'],
+            default: 'member'
+        }
+    }],
+    inviteCode: {
+        type: String,
+        unique: true
+    }
 });
 
-roomSchema.index({ members: 1 }, { unique: true });
+// Remove any existing unique index on members.user
+roomSchema.index({ 'members.user': 1 }, { unique: false });
 
-module.exports = mongoose.model('Room', roomSchema);
+const Room = mongoose.model('Room', roomSchema);
+module.exports = Room;

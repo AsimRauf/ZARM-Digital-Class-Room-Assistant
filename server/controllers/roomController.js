@@ -8,10 +8,20 @@ const createRoom = async (req, res) => {
         const { name, description } = req.body;
         const inviteCode = crypto.randomBytes(6).toString('hex');
 
+        // Check if user already has a room with the same name
+        const existingRoom = await Room.findOne({ 
+            name, 
+            'members.user': req.user._id 
+        });
+
+        if (existingRoom) {
+            return res.status(400).json({ message: "You already have a room with this name" });
+        }
+
         const room = new Room({
             name,
             description,
-            admin: req.user._id, // Use consistent user ID reference
+            admin: req.user._id,
             members: [{ user: req.user._id, role: 'admin' }],
             inviteCode
         });
@@ -62,27 +72,50 @@ const updateRoom = async (req, res) => {
     }
 };
 
-const joinRoom = async (req, res) => {
-    try {
-        // Find and update the room, adding the user only if they aren't already a member
-        const room = await Room.findOneAndUpdate(
-            { inviteCode: req.params.inviteCode },
-            { $addToSet: { members: { user: req.user._id, role: 'member' } } }, // Add user to members if not already present
-            { new: true } // Return the updated document
-        );
+// Add this helper function at the top of the file
+const joinRequests = new Map();
 
-        // Check if the room was found
+// Update the joinRoom controller
+const joinRoom = async (req, res) => {
+    const inviteCode = req.params.inviteCode;
+    const userId = req.user._id.toString();
+    const requestKey = `${userId}-${inviteCode}`;
+    
+    // Check if there's a pending request
+    if (joinRequests.get(requestKey)) {
+        return res.status(429).json({ message: "Please wait before trying to join again" });
+    }
+
+    try {
+        // Set request flag
+        joinRequests.set(requestKey, true);
+        
+        const room = await Room.findOne({ inviteCode });
         if (!room) {
-            return res.status(404).json({ message: 'Room not found' });
+            return res.status(404).json({ message: "Room not found" });
         }
 
-        // Return the updated room data
-        res.json(room);
+        // Check if user is already a member
+        const isMember = room.members.some(member => 
+            member.user.toString() === userId
+        );
+
+        if (isMember) {
+            return res.status(400).json({ message: "Already a member of this room" });
+        }
+
+        room.members.push({ user: userId, role: 'member' });
+        await room.save();
+        
+        res.status(200).json({ message: "Successfully joined the room" });
     } catch (error) {
         console.error("Error joining room:", error);
-
-        // Additional error handling for unexpected issues
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: error.message });
+    } finally {
+        // Clear request flag after a delay
+        setTimeout(() => {
+            joinRequests.delete(requestKey);
+        }, 5000);
     }
 };
 
