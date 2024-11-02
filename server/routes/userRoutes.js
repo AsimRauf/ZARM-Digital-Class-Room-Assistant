@@ -11,7 +11,8 @@ router.get('/profile/:email', async (req, res) => {
         res.json({
             name: user.name,
             email: user.email,
-            profileImage: user.profileImage
+            profileImage: user.profileImage,
+            id: user._id,
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

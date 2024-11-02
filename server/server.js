@@ -4,6 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const userRoutes = require('./routes/userRoutes');
 const cloudinaryConfig = require('./config/cloudinary');
 const corsOptions = require('./config/corsConfig');
 
@@ -24,9 +25,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 
 // Routes
 app.use('/api/auth', authRoutes);
-
-
-
+app.use('/api/user', userRoutes);
 app.use('/api/rooms', roomRoutes);
 
 // Error handling middleware
