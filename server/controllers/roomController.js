@@ -163,6 +163,80 @@ const leaveRoom = async (req, res) => {
     }
 };
 
+const getRoomSettings = async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.roomId)
+            .populate('members.user', 'name email profileImage');
+        
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        if (room.admin.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Only admin can access settings" });
+        }
+
+        res.json(room);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const updateMemberRole = async (req, res) => {
+    try {
+        const { role } = req.body;
+        const room = await Room.findById(req.params.roomId);
+        
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        if (room.admin.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Only admin can update roles" });
+        }
+
+        const memberIndex = room.members.findIndex(
+            member => member.user.toString() === req.params.userId
+        );
+
+        if (memberIndex === -1) {
+            return res.status(404).json({ message: "Member not found" });
+        }
+
+        // Validate role
+        if (!['member', 'moderator'].includes(role)) {
+            return res.status(400).json({ message: "Invalid role" });
+        }
+
+        room.members[memberIndex].role = role;
+        await room.save();
+        
+        res.json(room);
+    } catch (error) {
+        console.error("Error updating member role:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+const removeMember = async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.roomId);
+        
+        if (room.admin.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Only admin can remove members" });
+        }
+
+        room.members = room.members.filter(
+            member => member.user.toString() !== req.params.userId
+        );
+        
+        await room.save();
+        res.json(room);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 
 
 module.exports = {
@@ -171,5 +245,9 @@ module.exports = {
     updateRoom,
     joinRoom,
     deleteRoom,
-    leaveRoom
+    leaveRoom,
+    getRoomSettings,
+    updateMemberRole,
+    removeMember
 };
+

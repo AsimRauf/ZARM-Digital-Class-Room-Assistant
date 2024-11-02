@@ -22,7 +22,7 @@ const roomSchema = new mongoose.Schema({
         },
         role: {
             type: String,
-            enum: ['admin', 'member'],
+            enum: ['admin', 'member', 'moderator'],
             default: 'member'
         }
     }],
