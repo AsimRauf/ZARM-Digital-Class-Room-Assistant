@@ -1,11 +1,11 @@
+import { debounce } from '../utils/debounce';
 import React, { useState, useEffect } from 'react';
-import { 
-    Box, 
-    AppBar, 
-    Toolbar, 
-    IconButton, 
-    Typography, 
-    Menu, 
+import {
+    Box,
+    Toolbar,
+    IconButton,
+    Typography,
+    Menu,
     MenuItem,
     Button,
     Grid,
@@ -20,6 +20,7 @@ import {
     TextField
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import SettingsIcon from '@mui/icons-material/Settings';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -45,6 +46,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import ShareIcon from '@mui/icons-material/Share';
 
 import DialogContentText from '@mui/material/DialogContentText';
+import Navbar from './Navbar';
 
 const MainRoom = () => {
     const navigate = useNavigate();
@@ -57,49 +59,65 @@ const MainRoom = () => {
         name: '',
         description: ''
     });
+    // State for edit modal
     const [openEditModal, setOpenEditModal] = useState(null);  // State for edit modal
     const [editRoomData, setEditRoomData] = useState({ name: '', description: '' });
+    // State for delete confirmation dialog
+    const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState(null);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    // State for join modal
+    const [openJoinModal, setOpenJoinModal] = useState(false);
+    const [inviteCode, setInviteCode] = useState('');
+    const [isJoining, setIsJoining] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             const decoded = jwtDecode(token);
             fetchUserData(decoded.email);
+            fetchUserRooms();  // Move this inside the token check
         }
     }, []);
-      const fetchUserData = async (email) => {
-          try {
-              const response = await fetch(`http://localhost:5000/api/user/profile/${email}`);
-              const data = await response.json();
-              console.log('User data with ID:', data.id); // Check user ID format
-              setUserData(data);
-          } catch (error) {
-              console.error('Error:', error);
-          }
-      };
+    const fetchUserData = async (email) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/user/profile/${email}`);
+            const data = await response.json();
+            console.log('User data with ID:', data.id); // Check user ID format
+            setUserData(data);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
 
-      const fetchUserRooms = async () => {
-          try {
-              const token = localStorage.getItem('token');
-              console.log('Fetching rooms with token:', token);
-              const response = await fetch('http://localhost:5000/api/rooms/user-rooms', {
-                  headers: {
-                      'Authorization': `Bearer ${token}`
-                  }
-              });
-              const data = await response.json();
-              console.log('Fetched rooms:', data);
-              console.log('room admin: ', data[0].admin._id );
-              setRooms(data);
-          } catch (error) {
-              console.error('Error fetching rooms:', error);
-          }
-      };
+    const fetchUserRooms = async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('http://localhost:5000/api/rooms/user-rooms', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-      
-    useEffect(() => {
-        fetchUserRooms();
-    }, []);
+            const data = await response.json();
+
+            // Check if response contains rooms array
+            if (Array.isArray(data)) {
+                setRooms(data);
+            } else if (data.message === 'Authentication failed') {
+                // Handle authentication error
+                localStorage.removeItem('token');
+                navigate('/login');
+            } else {
+                setRooms([]); // Set empty array if no rooms
+            }
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+            setRooms([]); // Set empty array on error
+        }
+    };
 
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
@@ -134,23 +152,108 @@ const MainRoom = () => {
             console.error('Error creating room:', error);
         }
     };
-      const handleShareRoom = (inviteCode) => {
-          navigator.clipboard.writeText(`http://localhost:3000/join-room/${inviteCode}`);
-          // Add a snackbar notification here
-      };
+    const handleShareRoom = (inviteCode) => {
+        navigator.clipboard.writeText(`http://localhost:3000/join-room/${inviteCode}`);
+        // Add a snackbar notification here
+    };
+    // Add this to handle direct link joins
+    useEffect(() => {
+        const path = window.location.pathname;
+        if (path.includes('/join-room/')) {
+            const inviteCode = path.split('/join-room/')[1];
+            debouncedJoinRoom(inviteCode);
+            navigate('/'); // Redirect to main page after join attempt
+        }
+    }, []);
 
-      const handleDeleteRoom = async (roomId) => {
-          const token = localStorage.getItem('token');
-          await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
-              method: 'DELETE',
-              headers: {
-                  'Authorization': `Bearer ${token}`
-              }
-          });
-          fetchUserRooms();
-      };
+    // Handle join room
+    const debouncedJoinRoom = debounce(async (inviteCode) => {
+        if (isJoining) return;
+        setIsJoining(true);
 
-    
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`http://localhost:5000/api/rooms/join/${inviteCode}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                await fetchUserRooms();
+                setOpenJoinModal(false);
+                setInviteCode('');
+            }
+        } catch (error) {
+            console.error('Error joining room:', error);
+        } finally {
+            setIsJoining(false);
+        }
+    }, 300);
+    // Function to handle leaving a room
+    const handleLeaveRoom = async (roomId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/rooms/leave/${roomId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                await fetchUserRooms();
+            } else {
+                const error = await response.json();
+                console.error('Failed to leave room:', error.message);
+            }
+        } catch (error) {
+            console.error('Error leaving room:', error);
+        }
+    };
+
+
+    // Add delete handler
+    const handleDeleteRoom = (room) => {
+        console.log('Room to delete:', room._id);
+        setRoomToDelete(room._id);
+        setDeleteConfirmDialog(true);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteConfirmText === 'DELETE') {
+            try {
+                const token = localStorage.getItem('token');
+                console.log('Deleting room:', roomToDelete);
+
+                const response = await fetch(`http://localhost:5000/api/rooms/${roomToDelete}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to delete room');
+                }
+
+                await fetchUserRooms(); // Refresh rooms list
+                setDeleteConfirmDialog(false);
+                setDeleteConfirmText('');
+                setRoomToDelete(null);
+            } catch (error) {
+                console.error('Delete error:', error);
+            }
+        }
+    };
+
+
+
     const handleOpenEditModal = (room) => {
         console.log('Opening edit modal with room:', room);
         setOpenEditModal(room);
@@ -164,12 +267,12 @@ const MainRoom = () => {
         setOpenEditModal(null);
         setEditRoomData({ name: '', description: '' });
     };
-    
+
     const handleSaveRoomChanges = async () => {
         try {
             const token = localStorage.getItem('token');
             console.log('Sending updated data:', editRoomData);
-            
+
             const response = await fetch(`http://localhost:5000/api/rooms/${openEditModal._id}`, {
                 method: 'PUT',
                 headers: {
@@ -184,7 +287,7 @@ const MainRoom = () => {
 
             const updatedRoom = await response.json();
             console.log('Room updated:', updatedRoom);
-            
+
             handleCloseEditModal();
             fetchUserRooms(); // Refresh the rooms list with new data
         } catch (error) {
@@ -193,23 +296,23 @@ const MainRoom = () => {
     };
 
     const aiTools = [
-        { 
-            name: 'Notes Digitizer', 
+        {
+            name: 'Notes Digitizer',
             icon: <AutoFixHighIcon />,
             description: 'Convert handwritten notes to digital text'
         },
-        { 
-            name: 'Lecture Summarizer', 
+        {
+            name: 'Lecture Summarizer',
             icon: <VideoLibraryIcon />,
             description: 'Generate concise notes from video lectures'
         },
-        { 
-            name: 'Smart Quiz Generator', 
+        {
+            name: 'Smart Quiz Generator',
             icon: <QuizIcon />,
             description: 'Create quizzes from notes and lecture summaries'
         },
-        { 
-            name: 'Study Assistant Chat', 
+        {
+            name: 'Study Assistant Chat',
             icon: <ChatIcon />,
             description: 'Interactive learning support'
         }
@@ -217,86 +320,32 @@ const MainRoom = () => {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static">
-                <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={() => setDrawerOpen(true)}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        ZARM Digital Classroom
-                    </Typography>
-
-                    {userData && (
-                        <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                            {userData.name}
-                        </Typography>
-                    )}
-
-                    <IconButton color="inherit" sx={{ mr: 2 }}>
-                        <FolderIcon />
-                        <Typography variant="subtitle2" sx={{ ml: 1 }}>
-                            Saved Files
-                        </Typography>
-                    </IconButton>
-                      <IconButton
-                          size="large"
-                          onClick={handleMenu}
-                          color="inherit"
-                      >
-                          <Avatar 
-                              src={userData?.profileImage} 
-                              alt={userData?.name}
-                              sx={{ width: 40, height: 40 }}
-                          />
-                      </IconButton>
-                      <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl)}
-                          onClose={handleClose}
-                      >
-                          <MenuItem onClick={() => {
-                              navigate('/profile')
-                              handleClose()
-                          }}>
-                              <AccountCircleIcon sx={{ mr: 1 }} />
-                              Profile
-                          </MenuItem>
-                          <MenuItem onClick={() => {
-                              handleLogout()
-                              handleClose()
-                          }}>
-                              <LogoutIcon sx={{ mr: 1 }} />
-                              Logout
-                          </MenuItem>
-                      </Menu>
-                  </Toolbar>
-            </AppBar>
+            <Navbar
+                onMenuClick={() => setDrawerOpen(true)}
+                userData={userData}
+            />
 
             <Box sx={{ p: 3 }}>
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    gap: 3, 
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 3,
                     mb: 6,
-                    mt: 4 
+                    mt: 4
                 }}>
-                    <Button 
-                        variant="contained" 
+                    <Button
+                        variant="contained"
                         startIcon={<AddCircleIcon />}
                         onClick={() => setOpenCreateModal(true)}
                         size="large"
                     >
                         Create Room
                     </Button>
-                    <Button 
-                        variant="outlined" 
+                    <Button
+                        variant="outlined"
                         startIcon={<GroupAddIcon />}
                         size="large"
+                        onClick={() => setOpenJoinModal(true)}
                     >
                         Join Room
                     </Button>
@@ -314,7 +363,7 @@ const MainRoom = () => {
                                     <ListItemIcon>
                                         {tool.icon}
                                     </ListItemIcon>
-                                    <ListItemText 
+                                    <ListItemText
                                         primary={tool.name}
                                         secondary={tool.description}
                                     />
@@ -324,134 +373,118 @@ const MainRoom = () => {
                     </Box>
                 </Drawer>
 
-                <Typography 
-                    variant="h5" 
-                    gutterBottom 
+                <Typography
+                    variant="h5"
+                    gutterBottom
                     sx={{ mt: 4, mb: 3, fontWeight: 'bold' }}
                 >
                     Your Rooms
                 </Typography>
-                  <Grid container spacing={3}>
+                <Grid container spacing={3}>
+                    {rooms.map((room) => {
+                        // Add debug logs
+                        console.log('Current user ID:', userData?.id)
+                        console.log('Room members:', room.members)
+                        console.log('Admin check:', room.members.find(m => {
+                            console.log('Comparing:', {
+                                'Member user ID': m.user,
+                                'Current user ID': userData?.id,
+                                'Member role': m.role
+                            })
+                            return m.user._id === userData?.id && m.role === 'admin'
+                        }))
 
+                        return (
+                            <Grid item xs={12} key={room._id}>
+                                <Card elevation={3} sx={{
+                                    display: 'flex',
+                                    bgcolor: room.members.find(m =>
+                                        m.user._id === userData?.id &&
+                                        m.role === 'admin'
+                                    ) ? '#e3f2fd' : 'white',
+                                    '&:hover': { transform: 'translateY(-4px)', transition: 'all 0.3s' }
+                                }}>
+                                    <CardContent sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Box>
+                                            <Typography variant="h6" color="primary">{room.name}</Typography>
+                                            <Typography color="text.secondary">{room.description}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Members: {room.members?.length || 0}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                            <IconButton onClick={() => handleShareRoom(room.inviteCode)} color="primary">
+                                                <ShareIcon />
+                                            </IconButton>
+                                            {room.members.find(m =>
+                                                m.user._id === userData?.id &&
+                                                m.role === 'admin'
+                                            ) && (
+                                                    <>
+                                                        <IconButton onClick={() => handleOpenEditModal(room)} color="warning">
+                                                            <EditIcon />
+                                                        </IconButton>
+                                                        <IconButton onClick={() => handleDeleteRoom(room)} color="error">
+                                                            <DeleteIcon />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            onClick={() => {
+                                                                console.log('Navigating to settings for room:', room._id);
+                                                                navigate(`/room/${room._id}/settings`);
+                                                            }}
+                                                            color="primary"
+                                                        >
+                                                            <SettingsIcon />
+                                                        </IconButton>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      {rooms.map((room) => {
-                          
-                          
-                          return (
-                              <Grid item xs={12} key={room._id}>
-                                  <Card 
-                                      elevation={3}
-                                      sx={{ 
-                                          display: 'flex',
-                                          bgcolor: room.admin._id === userData?._id ? '#e3f2fd' : 'white',
-                                          '&:hover': { transform: 'translateY(-4px)', transition: 'all 0.3s' }
-                                      }}
-                                  >
-                                      <CardContent sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                          <Box>
-                                              <Typography variant="h6" color="primary">
-                                                  {room.name}
-                                              </Typography>
-                                              <Typography color="text.secondary">
-                                                  {room.description}
-                                              </Typography>
-                                              <Typography variant="body2" color="text.secondary">
-                                                  Members: {room.members?.length || 0}
-                                              </Typography>
-                                          </Box>
-                                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                              <IconButton 
-                                                  onClick={() => handleShareRoom(room.inviteCode)}
-                                                  color="primary"
-                                                  title="Copy invite link"
-                                              >
-                                                  <ShareIcon />
-                                              </IconButton>
-                                              { room.admin._id === userData.id && (
-                                                  <>
-                                                      <IconButton 
-                                                          onClick={() => handleOpenEditModal(room)}
-                                                          color="warning"
-                                                      >
-                                                          <EditIcon />
-                                                      </IconButton>
-                                                      <IconButton 
-                                                          onClick={() => handleDeleteRoom(room._id)}
-                                                          color="error"
-                                                      >
-                                                          <DeleteIcon />
-                                                      </IconButton>
-                                                  </>
-                                              )}
-                                              <Button 
-                                                  variant="contained" 
-                                                  color="primary"
-                                              >
-                                                  Enter Room
-                                              </Button>
-                                          </Box>
-                                      </CardContent>
-                                  </Card>
-                              </Grid>
-                          )
-                      })}
-                  </Grid>
-                <Dialog 
-                    open={openCreateModal} 
+                                                    </>
+                                                )}
+                                            {!room.members.find(m =>
+                                                m.user._id === userData?.id &&
+                                                m.role === 'admin'
+                                            ) && (
+                                                    <Button onClick={() => handleLeaveRoom(room._id)} color="secondary">
+                                                        Leave Room
+                                                    </Button>
+                                                )}
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={() => navigate(`/room/${room._id}`)}
+                                            >
+                                                Enter Room
+                                            </Button>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        )
+                    })}
+                </Grid>
+                <Dialog open={openJoinModal} onClose={() => setOpenJoinModal(false)}>
+                    <DialogTitle>Join Room</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Invite Code"
+                            fullWidth
+                            value={inviteCode}
+                            onChange={(e) => setInviteCode(e.target.value)}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenJoinModal(false)}>Cancel</Button>
+                        <Button
+                            onClick={() => debouncedJoinRoom(inviteCode)}
+                            disabled={isJoining}
+                        >
+                            {isJoining ? 'Joining...' : 'Join'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={openCreateModal}
                     onClose={() => setOpenCreateModal(false)}
                     maxWidth="sm"
                     fullWidth
@@ -465,7 +498,7 @@ const MainRoom = () => {
                             fullWidth
                             variant="outlined"
                             value={roomData.name}
-                            onChange={(e) => setRoomData({...roomData, name: e.target.value})}
+                            onChange={(e) => setRoomData({ ...roomData, name: e.target.value })}
                         />
                         <TextField
                             margin="dense"
@@ -475,13 +508,43 @@ const MainRoom = () => {
                             rows={4}
                             variant="outlined"
                             value={roomData.description}
-                            onChange={(e) => setRoomData({...roomData, description: e.target.value})}
+                            onChange={(e) => setRoomData({ ...roomData, description: e.target.value })}
                         />
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={() => setOpenCreateModal(false)}>Cancel</Button>
                         <Button onClick={handleCreateRoom} variant="contained">
                             Create
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+
+
+                {/* Delete Room Modal */}
+                <Dialog open={deleteConfirmDialog} onClose={() => setDeleteConfirmDialog(false)}>
+                    <DialogTitle>Delete Room</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            This action cannot be undone. To confirm deletion, please type 'DELETE' in the field below.
+                        </DialogContentText>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Type DELETE to confirm"
+                            fullWidth
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setDeleteConfirmDialog(false)}>Cancel</Button>
+                        <Button
+                            onClick={confirmDelete}
+                            color="error"
+                            disabled={deleteConfirmText !== 'DELETE'}
+                        >
+                            Delete Room
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -518,12 +581,10 @@ const MainRoom = () => {
                     </DialogActions>
                 </Dialog>
             </Box>
-        </Box>    );
+        </Box>);
 };
 
 export default MainRoom;
-
-// At the very end of MainRoom.jsx, make sure you have:
 
 
 

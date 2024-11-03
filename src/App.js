@@ -4,47 +4,52 @@ import RegisterForm from './components/forms/RegisterForm';
 import LoginForm from './components/forms/LoginForm';
 import MainRoom from './components/MainRoom';
 import JoinRoom from './components/JoinRoom';
+import RoomInterior from './components/RoomInterior';
+import RoomSettings from './components/RoomSettings';
+
 
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
+    const token = localStorage.getItem('token');
+    return token ? children : <Navigate to="/login" />;
 };
 
 const PublicRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  return !token ? children : <Navigate to="/mainroom" />;
+    const token = localStorage.getItem('token');
+    return !token ? children : <Navigate to="/mainroom" />;
 };
 
 function App() {
-  return (
-      <Router>
-          <Routes>
+    return (
+        <Router>
+            <Routes>
 
-            <Route path="/join-room/:inviteCode" element={<JoinRoom />} />
-
-              <Route path="/" element={
-                  <PublicRoute>
-                      <LoginForm />
-                  </PublicRoute>
-              } />
-              <Route path="/login" element={
-                  <PublicRoute>
-                      <LoginForm />
-                  </PublicRoute>
-              } />
-              <Route path="/register" element={
-                  <PublicRoute>
-                      <RegisterForm />
-                  </PublicRoute>
-              } />
-              <Route path="/mainroom" element={
-                  <PrivateRoute>
-                      <MainRoom />
-                  </PrivateRoute>
-              } />
-          </Routes>
-      </Router>
-  );
+                <Route path="/room/:roomId/settings" element={<RoomSettings />} />
+                <Route path="/join-room/:inviteCode" element={<JoinRoom />} />
+                <Route path="/room/:roomId" element={<RoomInterior />} />
+                <Route path="/" element={
+                    <PublicRoute>
+                        <LoginForm />
+                    </PublicRoute>
+                } />
+                <Route path="/login" element={
+                    <PublicRoute>
+                        <LoginForm />
+                    </PublicRoute>
+                } />
+                <Route path="/register" element={
+                    <PublicRoute>
+                        <RegisterForm />
+                    </PublicRoute>
+                } />
+                <Route path="/mainroom" element={
+                    <PrivateRoute>
+                        <MainRoom />
+                    </PrivateRoute>
+                } />
+            </Routes>
+        </Router>
+    );
 }
-
 export default App;
+
+
