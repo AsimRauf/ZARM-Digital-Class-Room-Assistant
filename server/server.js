@@ -8,6 +8,11 @@ const userRoutes = require('./routes/userRoutes');
 const cloudinaryConfig = require('./config/cloudinary');
 const corsOptions = require('./config/corsConfig');
 const courseRoutes = require('./routes/courseRoutes');
+const geminiRoutes = require('./routes/geminiRoutes');
+const noteRoutes = require('./routes/noteRoutes');
+
+
+
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +38,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api', courseRoutes);
+app.use('/api/gemini', geminiRoutes);
+app.use('/api/notes', noteRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
@@ -45,4 +53,5 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
