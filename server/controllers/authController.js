@@ -8,42 +8,45 @@ const crypto = require('crypto');
 
 
 // Registration controller
-exports.register = async (req, res) => {
+const register = async (req, res) => {
     try {
-        // Log raw request data
-        console.log('Raw request data:', req.body);
+        const { email } = req.body;
         
-        // Extract data directly from request body
-        const name = req.body.name.toString();
-        const email = req.body.email.toString();
-        const password = req.body.password.toString();
-        
-        // Create user with validated data
-        const user = new User({
-            name: name,
-            email: email,
-            password: password,
-            profileImage: req.file?.path
-        });
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email already registered' 
+            });
+        }
 
-        const savedUser = await user.save();
-        console.log('User created:', savedUser);
+        let profileImageUrl = '';
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path);
+            profileImageUrl = result.secure_url;
+        }
+
+        const user = new User({
+            ...req.body,
+            profileImage: profileImageUrl
+        });
+        
+        await user.save();
 
         res.status(201).json({
             success: true,
-            message: 'User registered successfully'
+            message: 'Registration successful'
         });
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
         });
     }
 };
 
 // Login controller
-exports.login = async (req, res) => {
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
@@ -79,4 +82,10 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+module.exports = {
+    register,
+    login,  
+};
+
 
