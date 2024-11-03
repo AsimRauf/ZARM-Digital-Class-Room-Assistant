@@ -7,6 +7,7 @@ const roomRoutes = require('./routes/roomRoutes');
 const userRoutes = require('./routes/userRoutes');
 const cloudinaryConfig = require('./config/cloudinary');
 const corsOptions = require('./config/corsConfig');
+const courseRoutes = require('./routes/courseRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -31,7 +32,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/rooms', roomRoutes);
-
+app.use('/api', courseRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;

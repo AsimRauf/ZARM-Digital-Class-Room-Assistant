@@ -34,21 +34,6 @@ const createRoom = async (req, res) => {
     }
 };
 
-// Get rooms where the user is a member
-const getUserRooms = async (req, res) => {
-    try {
-        const rooms = await Room.find({
-            'members.user': req.user._id
-        }).populate('admin', '_id name'); // Populate admin details
-
-        
-        res.json(rooms);
-    } catch (error) {
-        console.error("Error retrieving user rooms:", error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
 // Update room details
 const updateRoom = async (req, res) => {
     try {
@@ -75,54 +60,47 @@ const updateRoom = async (req, res) => {
 // Add this helper function at the top of the file
 const joinRequests = new Map();
 
-// Update the joinRoom controller
 const joinRoom = async (req, res) => {
-    const inviteCode = req.params.inviteCode;
-    const userId = req.user._id.toString();
-    const requestKey = `${userId}-${inviteCode}`;
+    const requestKey = `${req.user._id}-${req.params.inviteCode}`;
     
-    // Check if there's a pending request
-    if (joinRequests.get(requestKey)) {
-        return res.status(429).json({ message: "Please wait before trying to join again" });
+    if (joinRequests.has(requestKey)) {
+        return res.status(200).json({ message: "Join request in progress" });
     }
 
+    joinRequests.set(requestKey, true);
+    
     try {
-        // Set request flag
-        joinRequests.set(requestKey, true);
+        const room = await Room.findOne({ inviteCode: req.params.inviteCode });
         
-        const room = await Room.findOne({ inviteCode });
         if (!room) {
             return res.status(404).json({ message: "Room not found" });
         }
 
-        // Check if user is already a member
-        const isMember = room.members.some(member => 
-            member.user.toString() === userId
+        const existingMember = room.members.find(
+            member => member.user.toString() === req.user._id.toString()
         );
 
-        if (isMember) {
-            return res.status(400).json({ message: "Already a member of this room" });
+        if (existingMember) {
+            return res.status(200).json({ message: "Already a member of this room", room });
         }
 
-        room.members.push({ user: userId, role: 'member' });
+        room.members.push({ 
+            user: req.user._id, 
+            role: 'student'
+        });
+
         await room.save();
-        
-        res.status(200).json({ message: "Successfully joined the room" });
+        res.json(room);
     } catch (error) {
-        console.error("Error joining room:", error);
         res.status(500).json({ message: error.message });
     } finally {
-        // Clear request flag after a delay
         setTimeout(() => {
             joinRequests.delete(requestKey);
-        }, 5000);
+        }, 300);
     }
 };
 
-
-// Add this new controller function
 const deleteRoom = async (req, res) => {
-    console.log('Deleting room with ID:', req.params.id);
     try {
         const room = await Room.findById(req.params.id);
         
@@ -130,98 +108,137 @@ const deleteRoom = async (req, res) => {
             return res.status(404).json({ message: "Room not found" });
         }
 
-        // Check if user is admin
-        if (room.admin.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Only room admin can delete rooms" });
+        const isAdmin = room.members.find(
+            member => member.user.toString() === req.user._id.toString() && 
+            member.role === 'admin'
+        );
+
+        if (!isAdmin) {
+            return res.status(403).json({ message: "Only admin can delete room" });
         }
 
         await Room.findByIdAndDelete(req.params.id);
-        res.status(200).json({ message: "Room deleted successfully" });
+        res.json({ message: "Room deleted successfully" });
     } catch (error) {
-        console.error("Error deleting room:", error);
+        console.error('Delete room error:', error);
         res.status(500).json({ message: error.message });
     }
 };
-
-//leave room
-const leaveRoom = async (req, res) => {
-    try {
-        const room = await Room.findById(req.params.id);
-
-        if (!room) {
-            return res.status(404).json({ message: "Room not found" });
-        }
-
-        // Remove the user from the room's members list
-        room.members = room.members.filter(member => member.user.toString() !== req.user._id.toString());
-        await room.save();
-
-        res.status(200).json({ message: "Left the room successfully" });
-    } catch (error) {
-        console.error("Error leaving room:", error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-const getRoomSettings = async (req, res) => {
-    try {
-        const room = await Room.findById(req.params.roomId)
-            .populate('members.user', 'name email profileImage');
+  const leaveRoom = async (req, res) => {
+      try {
+          const room = await Room.findById(req.params.roomId);
         
-        if (!room) {
-            return res.status(404).json({ message: "Room not found" });
+          if (!room) {
+              return res.status(404).json({ message: "Room not found" });
+          }
+            // Check if user is admin
+            const isAdmin = room.members.find(
+                member => member.user.toString() === req.user._id.toString() && 
+                member.role === 'admin'
+            );
+
+            if (isAdmin) {
+                return res.status(403).json({ message: "Admin cannot leave room" });
+            }
+
+            // Remove member from room
+            room.members = room.members.filter(
+                member => member.user.toString() !== req.user._id.toString()
+            );
+
+            await room.save();
+            res.json({ message: "Successfully left room" });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
+    };
 
-        if (room.admin.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Only admin can access settings" });
-        }
+    module.exports = { leaveRoom };
 
-        res.json(room);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+  const getRoomSettings = async (req, res) => {
+      try {
+          const room = await Room.findById(req.params.roomId)
+              .populate('members.user', 'name email profileImage');
 
-const updateMemberRole = async (req, res) => {
+          if (!room) {
+              return res.status(404).json({ message: "Room not found" });
+          }
+
+          const isAdmin = room.members.find(
+              m => m.user._id.toString() === req.user._id.toString() && 
+              m.role === 'admin'
+          );
+
+          if (!isAdmin) {
+              return res.status(403).json({ message: "Only admin can access settings" });
+          }
+
+          res.json(room);
+      } catch (error) {
+          res.status(500).json({ message: error.message });
+      }
+  };
+
+  const updateMemberRole = async (req, res) => {
     try {
-        const { role } = req.body;
-        const room = await Room.findById(req.params.roomId);
-        
+        const { userId, role } = req.body;
+        const roomId = req.params.roomId;
+
+        const room = await Room.findById(roomId);
         if (!room) {
             return res.status(404).json({ message: "Room not found" });
         }
 
-        if (room.admin.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Only admin can update roles" });
-        }
-
+        // Find and update the member's role
         const memberIndex = room.members.findIndex(
-            member => member.user.toString() === req.params.userId
+            member => member.user.toString() === userId
         );
 
-        if (memberIndex === -1) {
-            return res.status(404).json({ message: "Member not found" });
+        if (memberIndex !== -1) {
+            room.members[memberIndex].role = role;
+            // Clear assigned course if role is not teacher
+            if (role !== 'teacher') {
+                room.members[memberIndex].assignedCourse = null;
+            }
         }
 
-        // Validate role
-        if (!['member', 'moderator'].includes(role)) {
-            return res.status(400).json({ message: "Invalid role" });
-        }
-
-        room.members[memberIndex].role = role;
         await room.save();
-        
         res.json(room);
     } catch (error) {
-        console.error("Error updating member role:", error);
         res.status(500).json({ message: error.message });
     }
 };
+
+  const getUserRooms = async (req, res) => {
+      try {
+          const rooms = await Room.find({
+              'members.user': req.user._id
+          }).populate('members.user', 'name email profileImage');
+
+          // Filter rooms based on teacher's assigned course
+          const filteredRooms = rooms.filter(room => {
+              const member = room.members.find(m => m.user._id.toString() === req.user._id.toString());
+              return member.role !== 'teacher' || (member.role === 'teacher' && member.assignedCourse);
+          });
+
+          res.json(filteredRooms);
+      } catch (error) {
+          res.status(500).json({ message: error.message });
+      }
+  };
+
 const removeMember = async (req, res) => {
     try {
         const room = await Room.findById(req.params.roomId);
         
-        if (room.admin.toString() !== req.user._id.toString()) {
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        if (!room.members.find(m => 
+            m.user.toString() === req.user._id.toString() && 
+            m.role === 'admin'
+        )) {
             return res.status(403).json({ message: "Only admin can remove members" });
         }
 
@@ -229,6 +246,49 @@ const removeMember = async (req, res) => {
             member => member.user.toString() !== req.params.userId
         );
         
+        await room.save();
+        res.json({ message: "Member removed successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getRoomDetails = async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.roomId)
+            .populate('members.user')
+            .populate('members.assignedCourse');
+            
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+        
+        res.json(room);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const assignTeacher = async (req, res) => {
+    try {
+        const { userId, courseId } = req.body;
+        const roomId = req.params.roomId;
+
+        const room = await Room.findById(roomId);
+        if (!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        // Find and update the member's role and assigned course
+        const memberIndex = room.members.findIndex(
+            member => member.user.toString() === userId
+        );
+
+        if (memberIndex !== -1) {
+            room.members[memberIndex].role = 'teacher';
+            room.members[memberIndex].assignedCourse = courseId;
+        }
+
         await room.save();
         res.json(room);
     } catch (error) {
@@ -248,6 +308,11 @@ module.exports = {
     leaveRoom,
     getRoomSettings,
     updateMemberRole,
-    removeMember
+    removeMember,
+    getRoomDetails,
+    assignTeacher
 };
+
+
+
 

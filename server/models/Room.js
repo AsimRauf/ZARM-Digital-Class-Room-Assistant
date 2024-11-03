@@ -10,11 +10,6 @@ const roomSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    admin: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
     members: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,
@@ -22,18 +17,15 @@ const roomSchema = new mongoose.Schema({
         },
         role: {
             type: String,
-            enum: ['admin', 'member', 'moderator'],
-            default: 'member'
+            enum: ['admin', 'teacher', 'student'],
+            default: 'student'
+        },
+        assignedCourse: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course'
         }
     }],
-    inviteCode: {
-        type: String,
-        unique: true
-    }
+    inviteCode: String
 });
 
-// Remove any existing unique index on members.user
-roomSchema.index({ 'members.user': 1 }, { unique: false });
-
-const Room = mongoose.model('Room', roomSchema);
-module.exports = Room;
+module.exports = mongoose.model('Room', roomSchema);
