@@ -6,6 +6,7 @@ import MainRoom from './components/MainRoom';
 import JoinRoom from './components/JoinRoom';
 import RoomInterior from './components/RoomInterior';
 import RoomSettings from './components/RoomSettings';
+import NotesDigitizer from './components/NotesDigitizer';
 
 
 const PrivateRoute = ({ children }) => {
@@ -46,10 +47,10 @@ function App() {
                         <MainRoom />
                     </PrivateRoute>
                 } />
+                <Route path="/notes-digitizer" element={<NotesDigitizer />} />
             </Routes>
         </Router>
     );
 }
 export default App;
-
 

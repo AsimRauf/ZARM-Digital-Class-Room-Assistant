@@ -1,140 +1,282 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, Avatar, CircularProgress } from '@mui/material';
+import {
+    Box,
+    Paper,
+    TextField,
+    Button,
+    Typography,
+    Container,
+    Link,
+    IconButton,
+    InputAdornment,
+    Alert,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../../services/authService';
+import SchoolIcon from '@mui/icons-material/School';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
-const RegisterForm = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [preview, setPreview] = useState(null);
-  const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      profileImage: null
-  });
+const Register = () => {
+    const navigate = useNavigate();
+    const [activeStep, setActiveStep] = useState(0);
+    const [showPassword, setShowPassword] = useState(false);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        profileImage: null
+    });
+    const [errors, setErrors] = useState({});
+    const [serverError, setServerError] = useState('');
 
-  const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-          console.log('Selected file:', file);
-          setFormData(prev => ({
-              ...prev,
-              profileImage: file
-          }));
-          setPreview(URL.createObjectURL(file));
-      }
-  };
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setFormData({ ...formData, profileImage: file });
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
 
-  const handleSubmit = async (e) => {
-      e.preventDefault();
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.name.trim()) newErrors.name = 'Name is required';
+        if (!formData.email) newErrors.email = 'Email is required';
+        if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
+        if (!formData.password) newErrors.password = 'Password is required';
+        if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+        if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+        }
         
-      setLoading(true);
-      const formDataToSend = new FormData();
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setServerError('');
         
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('password', formData.password);
-        
-      if (formData.profileImage) {
-          formDataToSend.append('profileImage', formData.profileImage);
-      }
+        if (!validateForm()) return;
 
-      try {
-          const response = await authService.register(formDataToSend);
-          console.log('Registration successful:', response);
-          navigate('/mainroom');
-      } catch (err) {
-          console.error('Registration error:', err);
-          setError(err.response?.data?.message || 'Registration failed');
-      } finally {
-          setLoading(false);
-      }
-  };
+        const formDataToSend = new FormData();
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('email', formData.email);
+        formDataToSend.append('password', formData.password);
+        if (formData.profileImage) {
+            formDataToSend.append('profileImage', formData.profileImage);
+        }
 
-  return (
-      <Box sx={{ maxWidth: 400, mx: 'auto', p: 3 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-              Create Account
-          </Typography>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-              <Avatar
-                  src={preview}
-                  sx={{ width: 100, height: 100, cursor: 'pointer' }}
-                  onClick={() => document.getElementById('profileImage').click()}
-              />
-          </Box>
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/register', {
+                method: 'POST',
+                body: formDataToSend
+            });
 
-          <input
-              id="profileImage"
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleImageChange}
-          />
+            const data = await response.json();
+            
+            if (response.ok) {
+                navigate('/login');
+            } else {
+                setServerError(data.message);
+                setErrors(prev => ({ ...prev, email: data.message }));
+            }
+        } catch (error) {
+            setServerError('Registration failed. Please try again.');
+        }
+    };
 
-          <form onSubmit={handleSubmit}>
-              <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Full Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  required
-              />
-              <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  required
-              />
-              <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  required
-              />
-              <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Confirm Password"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                  required
-              />
+    return (
+        <Container component="main" maxWidth="sm">
+            <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Paper elevation={6} sx={{ p: 4, width: '100%', borderRadius: 3 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 120,
+                                height: 120,
+                                borderRadius: '50%',
+                                border: '2px dashed #2196F3',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                mb: 3,
+                                '&:hover': {
+                                    opacity: 0.8,
+                                    backgroundColor: 'rgba(33, 150, 243, 0.04)'
+                                }
+                            }}
+                            component="label"
+                        >
+                            {imagePreview ? (
+                                <img
+                                    src={imagePreview}
+                                    alt="Profile Preview"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            ) : (
+                                <AddAPhotoIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                            )}
+                            <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={handleImageChange}
+                            />
+                        </Box>
 
-              {error && (
-                  <Typography color="error" sx={{ mt: 2 }}>
-                      {error}
-                  </Typography>
-              )}
+                        <SchoolIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
+                        <Typography component="h1" variant="h4" sx={{ 
+                            mb: 3, 
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(45deg, #2196F3, #21CBF3)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}>
+                            Join EduSpace
+                        </Typography>
 
-              <Button
-                  fullWidth
-                  type="submit"
-                  variant="contained"
-                  sx={{ mt: 3 }}
-                  disabled={loading}
-              >
-                  {loading ? <CircularProgress size={24} /> : 'Register'}
-              </Button>
-          </form>
-      </Box>
-  );
+                        {serverError && (
+                            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+                                {serverError}
+                            </Alert>
+                        )}
+
+                        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                label="Full Name"
+                                value={formData.name}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, name: e.target.value });
+                                    if (errors.name) setErrors({ ...errors, name: '' });
+                                }}
+                                error={Boolean(errors.name)}
+                                helperText={errors.name}
+                                sx={{ mb: 2 }}
+                            />
+                            
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                label="Email Address"
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, email: e.target.value });
+                                    if (errors.email) setErrors({ ...errors, email: '' });
+                                    setServerError('');
+                                }}
+                                error={Boolean(errors.email)}
+                                helperText={errors.email}
+                                sx={{ mb: 2 }}
+                            />
+                            
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                label="Password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={formData.password}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, password: e.target.value });
+                                    if (errors.password) setErrors({ ...errors, password: '' });
+                                }}
+                                error={Boolean(errors.password)}
+                                helperText={errors.password}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={() => setShowPassword(!showPassword)}>
+                                                {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{ mb: 3 }}
+                            />
+
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                label="Confirm Password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={formData.confirmPassword}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, confirmPassword: e.target.value });
+                                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
+                                }}
+                                error={Boolean(errors.confirmPassword)}
+                                helperText={errors.confirmPassword}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={() => setShowPassword(!showPassword)}>
+                                                {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{ mb: 3 }}
+                            />
+
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                sx={{
+                                    py: 1.5,
+                                    fontSize: '1.1rem',
+                                    borderRadius: 2,
+                                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                                    transition: 'transform 0.2s',
+                                    '&:hover': {
+                                        background: 'linear-gradient(45deg, #21CBF3 30%, #2196F3 90%)',
+                                        transform: 'scale(1.02)'
+                                    }
+                                }}
+                            >
+                                Create Account
+                            </Button>
+                        </form>
+
+                        <Typography variant="body1" sx={{ mt: 4 }}>
+                            Already have an account?{' '}
+                            <Link
+                                onClick={() => navigate('/login')}
+                                sx={{
+                                    cursor: 'pointer',
+                                    color: 'primary.main',
+                                    textDecoration: 'none',
+                                    fontWeight: 'bold',
+                                    '&:hover': {
+                                        textDecoration: 'underline'
+                                    }
+                                }}
+                            >
+                                Sign In
+                            </Link>
+                        </Typography>
+                    </Box>
+                </Paper>
+            </Box>
+        </Container>
+    );
 };
 
-export default RegisterForm;
+export default Register;

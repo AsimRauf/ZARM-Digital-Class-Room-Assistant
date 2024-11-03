@@ -1,23 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    AppBar, 
-    Toolbar, 
-    IconButton, 
-    Typography, 
-    Avatar, 
-    Menu, 
-    MenuItem, 
-    Box 
+import React, { useState } from 'react';
+import {
+    AppBar,
+    Toolbar,
+    IconButton,
+    Typography,
+    Menu,
+    MenuItem,
+    Avatar,
+    Box,
+    Drawer,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import FolderIcon from '@mui/icons-material/Folder';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import QuizIcon from '@mui/icons-material/Quiz';
+import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = ({ onMenuClick, userData }) => {
+const Navbar = ({ userData }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    const aiTools = [
+        {
+            name: 'Notes Digitizer',
+            icon: <AutoFixHighIcon />,
+            description: 'Convert handwritten notes to digital text',
+            path: '/notes-digitizer'
+        },
+        {
+            name: 'Lecture Summarizer',
+            icon: <VideoLibraryIcon />,
+            description: 'Generate concise notes from video lectures',
+            path: '/lecture-summarizer'
+        },
+        {
+            name: 'Smart Quiz Generator',
+            icon: <QuizIcon />,
+            description: 'Create quizzes from notes and lecture summaries',
+            path: '/quiz-generator'
+        },
+        {
+            name: 'Study Assistant Chat',
+            icon: <ChatIcon />,
+            description: 'Interactive learning support',
+            path: '/study-assistant'
+        }
+    ];
 
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
@@ -33,66 +69,70 @@ const Navbar = ({ onMenuClick, userData }) => {
     };
 
     return (
-        <AppBar position="static">
-            <Toolbar>
-                <IconButton
-                    edge="start"
-                    color="inherit"
-                    onClick={onMenuClick}
-                >
-                    <MenuIcon />
-                </IconButton>
-
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                    ZARM Digital Classroom
-                </Typography>
-
-                {userData && (
-                    <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                        {userData.name}
+        <>
+            <AppBar position="static">
+                <Toolbar>
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        onClick={() => setDrawerOpen(true)}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        ZARM EduSpace
                     </Typography>
-                )}
+                    {userData && (
+                        <div>
+                            <IconButton onClick={handleMenu} color="inherit">
+                                <Avatar src={userData.profileImage} />
+                            </IconButton>
+                            <Menu
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={handleClose}
+                            >
+                                <MenuItem onClick={() => navigate('/profile')}>
+                                    <AccountCircleIcon sx={{ mr: 1 }} /> Profile
+                                </MenuItem>
+                                <MenuItem onClick={handleLogout}>
+                                    <LogoutIcon sx={{ mr: 1 }} /> Logout
+                                </MenuItem>
+                            </Menu>
+                        </div>
+                    )}
+                </Toolbar>
+            </AppBar>
 
-                <IconButton color="inherit" sx={{ mr: 2 }}>
-                    <FolderIcon />
-                    <Typography variant="subtitle2" sx={{ ml: 1 }}>
-                        Saved Files
-                    </Typography>
-                </IconButton>
-
-                <IconButton
-                    size="large"
-                    onClick={handleMenu}
-                    color="inherit"
-                >
-                    <Avatar 
-                        src={userData?.profileImage} 
-                        alt={userData?.name}
-                        sx={{ width: 40, height: 40 }}
-                    />
-                </IconButton>
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleClose}
-                >
-                    <MenuItem onClick={() => {
-                        navigate('/profile')
-                        handleClose()
-                    }}>
-                        <AccountCircleIcon sx={{ mr: 1 }} />
-                        Profile
-                    </MenuItem>
-                    <MenuItem onClick={() => {
-                        handleLogout()
-                        handleClose()
-                    }}>
-                        <LogoutIcon sx={{ mr: 1 }} />
-                        Logout
-                    </MenuItem>
-                </Menu>
-            </Toolbar>
-        </AppBar>
+            <Drawer
+                anchor="left"
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+            >
+                <Box sx={{ width: 250 }} role="presentation">
+                    <List>
+                        {aiTools.map((tool) => (
+                            <ListItem 
+                                button 
+                                key={tool.name}
+                                onClick={() => {
+                                    navigate(tool.path);
+                                    setDrawerOpen(false);
+                                }}
+                            >
+                                <ListItemIcon>
+                                    {tool.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={tool.name}
+                                    secondary={tool.description}
+                                />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>
+            </Drawer>
+        </>
     );
 };
 
