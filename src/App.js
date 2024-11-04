@@ -7,7 +7,9 @@ import JoinRoom from './components/JoinRoom';
 import RoomInterior from './components/RoomInterior';
 import RoomSettings from './components/RoomSettings';
 import NotesDigitizer from './components/NotesDigitizer';
-
+import FileSystem from './components/FileSystem';
+import NotesDisplay from './components/NotesDisplay';
+import ViewNote from './components/ViewNote';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -23,7 +25,12 @@ function App() {
     return (
         <Router>
             <Routes>
-
+                <Route path="/notes/:roomId/:courseId/:noteId" element={<ViewNote />} />
+                <Route path="/files/:roomId/:courseId/notes" element={<NotesDisplay />} />
+                <Route path="/files" element={<FileSystem />} />
+                <Route path="/files/:roomId" element={<FileSystem />} />
+                <Route path="/files/:roomId/:courseId" element={<FileSystem />} />
+                <Route path="/files/:roomId/:courseId/notes" element={<FileSystem />} />
                 <Route path="/room/:roomId/settings" element={<RoomSettings />} />
                 <Route path="/join-room/:inviteCode" element={<JoinRoom />} />
                 <Route path="/room/:roomId" element={<RoomInterior />} />

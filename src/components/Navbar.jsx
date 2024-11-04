@@ -14,6 +14,8 @@ import {
     ListItemIcon,
     ListItemText
 } from '@mui/material';
+import FolderIcon from '@mui/icons-material/Folder';
+import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -63,6 +65,12 @@ const Navbar = ({ userData }) => {
         setAnchorEl(null);
     };
 
+    const handleFilesClick = () => {
+        navigate('/files');
+        // Force a refresh of the FileSystem component
+        window.location.pathname = '/files';
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/login');
@@ -84,6 +92,28 @@ const Navbar = ({ userData }) => {
                     </Typography>
                     {userData && (
                         <div>
+                            <IconButton
+                                color="inherit"
+                                onClick={() => navigate('/')}
+                                sx={{ ml: 2 }}
+                            >
+                                <HomeIcon />
+                                <Typography variant="subtitle1" sx={{ ml: 1 }}>
+                                    Rooms
+                                </Typography>
+                            </IconButton>
+
+                            <IconButton
+                                color="inherit"
+                                onClick={handleFilesClick}
+                                sx={{ ml: 2 }}
+                            >
+                                <FolderIcon />
+                                <Typography variant="subtitle1" sx={{ ml: 1 }}>
+                                    Files
+                                </Typography>
+                            </IconButton>
+
                             <IconButton onClick={handleMenu} color="inherit">
                                 <Avatar src={userData.profileImage} />
                             </IconButton>
@@ -112,8 +142,8 @@ const Navbar = ({ userData }) => {
                 <Box sx={{ width: 250 }} role="presentation">
                     <List>
                         {aiTools.map((tool) => (
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 key={tool.name}
                                 onClick={() => {
                                     navigate(tool.path);
@@ -137,3 +167,6 @@ const Navbar = ({ userData }) => {
 };
 
 export default Navbar;
+
+
+
