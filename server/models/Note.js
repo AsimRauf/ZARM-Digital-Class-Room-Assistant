@@ -43,4 +43,9 @@ const noteSchema = new mongoose.Schema({
     }
 });
 
+noteSchema.index({ courseId: 1, userId: 1 });
+
 module.exports = mongoose.model('Note', noteSchema);
+
+// Add compound index for faster queries
+

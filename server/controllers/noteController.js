@@ -35,8 +35,11 @@ const getNotes = async (req, res) => {
     try {
         const notes = await Note.find({ 
             userId: req.user._id,
-            courseId: req.params.courseId 
-        }).sort({ createdAt: -1 });
+            courseId: req.params.courseId,
+            roomId: req.params.roomId
+        })
+        .select('title htmlContent content createdAt lastModified')
+        .sort({ createdAt: -1 });
         
         res.json(notes);
     } catch (error) {
@@ -44,49 +47,14 @@ const getNotes = async (req, res) => {
     }
 };
 
-const getUserNotes = async (req, res) => {
-    try {
-        const notes = await Note.find({ userId: req.user._id })
-            .populate('courseId', 'name')
-            .populate('roomId', 'name')
-            .sort({ createdAt: -1 });
-            
-        res.json(notes);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-const getNoteById = async (req, res) => {
-    try {
-        const note = await Note.findById(req.params.noteId)
-            .populate('courseId', 'name')
-            .populate('roomId', 'name');
-            
-        if (!note) {
-            return res.status(404).json({ message: "Note not found" });
-        }
-        
-        if (note.userId.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Access denied" });
-        }
-        
-        res.json(note);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
 
 const updateNote = async (req, res) => {
     try {
-        const { title, content, htmlContent, tags } = req.body;
+        const { title } = req.body;
         const note = await Note.findOneAndUpdate(
             { _id: req.params.noteId, userId: req.user._id },
             { 
-                title, 
-                content, 
-                htmlContent, 
-                tags,
+                title,
                 lastModified: Date.now()
             },
             { new: true }
@@ -118,12 +86,26 @@ const deleteNote = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+const getNotesByCourse = async (req, res) => {
+    try {
+        const notes = await Note.find({
+            courseId: req.params.courseId,
+            userId: req.user._id
+        })
+        .select('title htmlContent createdAt lastModified')
+        .sort({ lastModified: -1 });
+        
+        res.json(notes);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 module.exports = {
     createNote,
     getNotes,
-    getUserNotes,
-    getNoteById,
     updateNote,
     deleteNote
 };
+

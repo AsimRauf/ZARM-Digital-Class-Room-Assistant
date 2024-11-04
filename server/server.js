@@ -12,8 +12,6 @@ const geminiRoutes = require('./routes/geminiRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 
 
-
-
 // Load environment variables
 dotenv.config();
 
