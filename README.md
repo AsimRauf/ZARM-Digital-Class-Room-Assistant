@@ -97,6 +97,7 @@ OPENAI_API_KEY=your_openai_api_key
 CLOUDINARY_CLOUD_NAME=your_cloudinary_name
 CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
+GOOGLE_GEMINI_API=your_api_key
 
 ## Setup Instructions
 
