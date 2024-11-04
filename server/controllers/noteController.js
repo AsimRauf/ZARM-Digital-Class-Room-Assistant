@@ -1,4 +1,6 @@
 const Note = require('../models/Note');
+const PDFDocument = require('pdfkit');
+const docx = require('docx');
 
 const createNote = async (req, res) => {
     try {
@@ -86,16 +88,36 @@ const deleteNote = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-const getNotesByCourse = async (req, res) => {
+const downloadNote = async (req, res) => {
     try {
-        const notes = await Note.find({
-            courseId: req.params.courseId,
-            userId: req.user._id
-        })
-        .select('title htmlContent createdAt lastModified')
-        .sort({ lastModified: -1 });
-        
-        res.json(notes);
+        const note = await Note.findById(req.params.noteId);
+        const format = req.query.format;
+
+        if (format === 'pdf') {
+            const doc = new PDFDocument();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=${note.title}.pdf`);
+            doc.pipe(res);
+            doc.text(note.title);
+            doc.text(note.content);
+            doc.end();
+        } else if (format === 'docx') {
+            const doc = new docx.Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new docx.Paragraph({
+                            children: [new docx.TextRun(note.content)]
+                        })
+                    ]
+                }]
+            });
+
+            const buffer = await docx.Packer.toBuffer(doc);
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            res.setHeader('Content-Disposition', `attachment; filename=${note.title}.docx`);
+            res.send(buffer);
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -106,6 +128,7 @@ module.exports = {
     createNote,
     getNotes,
     updateNote,
-    deleteNote
+    deleteNote,
+    downloadNote
 };
 

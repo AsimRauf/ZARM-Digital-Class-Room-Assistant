@@ -44,12 +44,14 @@ const convertHandwrittenNotes = async (req, res) => {
             - .code-block for code sections
             - .note-section for content sections
            
-            Return ONLY the formatted HTML content.
+            Return ONLY the formatted HTML content without any markdown backticks or language indicators.
         `;
 
         console.log('🤖 Sending to Gemini...');
         const result = await chat.sendMessage([prompt, imageData]);
-        const htmlContent = result.response.text();
+        let htmlContent = result.response.text();
+        htmlContent = htmlContent.replace(/```html|```/g, '').trim();
+
         
         console.log('✨ Content processed successfully');
         
@@ -67,6 +69,7 @@ const convertHandwrittenNotes = async (req, res) => {
             success: true,
             data: document
         });
+
 
     } catch (error) {
         console.error('❌ Error:', error);
