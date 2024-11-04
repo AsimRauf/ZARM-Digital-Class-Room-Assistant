@@ -1,33 +1,51 @@
-# Digital Learning Platform
+# Zarm Eduspace (Digital Learning Platform)
 
-A modern web application for managing digital notes, course materials, and collaborative learning spaces.
+A modern web application for managing digital notes, course materials, and collaborative learning spaces, enhanced with Gemini AI capabilities.
 
-## Features
+## Core Features
 
-### Room Management
-- Create and join learning rooms
-- Manage room members and permissions
-- Share rooms via invite codes
-- Administrative controls for room owners
+### Implemented Features
+- Room-based Learning Spaces
+  - Create and join rooms
+  - Invite system with unique codes
+  - Member management
+  - Admin controls
 
-### Course Organization
-- Organize content by courses within rooms
-- Digital notes management
-- Resource sharing capabilities
-- Structured learning paths
+- Course Organization
+  - Structured course folders
+  - Digital notes management
+  - Resource categorization
+  - Easy navigation system
 
-### Digital Notes
-- Create and edit rich text notes
-- View formatted HTML content
-- Real-time updates
-- Tag and categorize notes
-- Share notes within courses
+- Digital Notes System
+  - Rich text editor
+  - HTML content support
+  - Note organization by courses
+  - View, edit, and delete functionality
 
-### User System
-- Secure authentication
-- User profiles
-- Role-based access control
-- Personal workspace
+### AI Features (Powered by Gemini)
+
+#### Current Implementation
+- Notes Digitizer
+  - Handwritten to digital text conversion
+  - Smart formatting preservation
+  - Multi-language support
+
+#### Upcoming Features
+- Lecture Summarizer
+  - Video lecture analysis
+  - Key points extraction
+  - Chapter summaries
+
+- Smart Quiz Generator
+  - Automatic quiz creation from notes
+  - Multiple question formats
+  - Difficulty levels
+
+- Study Assistant
+  - Context-aware learning support
+  - Resource recommendations
+  - Doubt resolution
 
 ## Tech Stack
 
@@ -43,6 +61,11 @@ A modern web application for managing digital notes, course materials, and colla
 - MongoDB
 - Mongoose
 - JWT
+
+### AI Integration
+- Google Gemini API
+- Cloud Vision API
+- Natural Language Processing
 
 ## API Endpoints
 
@@ -63,31 +86,17 @@ A modern web application for managing digital notes, course materials, and colla
 - PUT /api/notes/:noteId
 - DELETE /api/notes/:noteId
 
-## Database Schema
+## Environment Variables
 
-### User
-- email
-- password
-- name
-- role
-
-### Room
-- name
-- description
-- members
-- inviteCode
-- courses
-
-### Note
-- title
-- content
-- htmlContent
-- courseId
-- userId
-- roomId
-- tags
-- createdAt
-- lastModified
+### Server (.env)
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+OPENAI_API_KEY=your_openai_api_key
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
 
 ## Setup Instructions
 
