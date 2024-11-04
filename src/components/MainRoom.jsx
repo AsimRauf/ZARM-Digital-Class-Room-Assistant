@@ -70,6 +70,9 @@ const MainRoom = () => {
     const [openJoinModal, setOpenJoinModal] = useState(false);
     const [inviteCode, setInviteCode] = useState('');
     const [isJoining, setIsJoining] = useState(false);
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
+    const [currentShareRoom, setCurrentShareRoom] = useState(null);
+
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -152,10 +155,17 @@ const MainRoom = () => {
             console.error('Error creating room:', error);
         }
     };
-    const handleShareRoom = (inviteCode) => {
-        navigator.clipboard.writeText(`http://localhost:3000/join-room/${inviteCode}`);
-        // Add a snackbar notification here
+    const handleShareRoom = (room) => {
+        setCurrentShareRoom(room);
+        setShareDialogOpen(true);
     };
+
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text);
+        // You can add a success notification here
+    };
+
+
     // Add this to handle direct link joins
     useEffect(() => {
         const path = window.location.pathname;
@@ -319,6 +329,7 @@ const MainRoom = () => {
     ];
 
     return (
+
         <Box sx={{ flexGrow: 1 }}>
             <Navbar
                 onMenuClick={() => setDrawerOpen(true)}
@@ -350,6 +361,58 @@ const MainRoom = () => {
                         Join Room
                     </Button>
                 </Box>
+                <Dialog open={shareDialogOpen} onClose={() => setShareDialogOpen(false)}>
+                    <DialogTitle>Share Room</DialogTitle>
+                    <DialogContent>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, my: 2 }}>
+                            <Box>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    Invite Link
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <TextField
+                                        fullWidth
+                                        value={`http://localhost:3000/join-room/${currentShareRoom?.inviteCode}`}
+                                        variant="outlined"
+                                        size="small"
+                                        InputProps={{ readOnly: true }}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => handleCopy(`http://localhost:3000/join-room/${currentShareRoom?.inviteCode}`)}
+                                    >
+                                        Copy Link
+                                    </Button>
+                                </Box>
+                            </Box>
+
+                            <Box>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    Invite Code
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <TextField
+                                        fullWidth
+                                        value={currentShareRoom?.inviteCode}
+                                        variant="outlined"
+                                        size="small"
+                                        InputProps={{ readOnly: true }}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => handleCopy(currentShareRoom?.inviteCode)}
+                                    >
+                                        Copy Code
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Box>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setShareDialogOpen(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+
 
                 <Drawer
                     anchor="left"
@@ -413,9 +476,10 @@ const MainRoom = () => {
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                            <IconButton onClick={() => handleShareRoom(room.inviteCode)} color="primary">
+                                            <IconButton onClick={() => handleShareRoom(room)} color="primary">
                                                 <ShareIcon />
                                             </IconButton>
+
                                             {room.members.find(m =>
                                                 m.user._id === userData?.id &&
                                                 m.role === 'admin'
