@@ -15,6 +15,7 @@ import {
     StepLabel,
     Alert
 } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
 import Navbar from './Navbar';
@@ -33,6 +34,7 @@ const NotesDigitizer = () => {
     const [selectedCourse, setSelectedCourse] = useState('');
     const [saving, setSaving] = useState(false);
     const [userData, setUserData] = useState(null);
+    const [saveStatus, setSaveStatus] = useState('unsaved');
 
     useEffect(() => {
         fetchUserRooms();
@@ -100,7 +102,8 @@ const NotesDigitizer = () => {
     const handleSaveNote = async () => {
         if (!selectedRoom || !selectedCourse || !convertedNote) return;
         setSaving(true);
-    
+        setSaveStatus('saving');
+
         const token = localStorage.getItem('token');
         try {
             const response = await fetch(`http://localhost:5000/api/notes/rooms/${selectedRoom}/courses/${selectedCourse}`, {
@@ -115,12 +118,14 @@ const NotesDigitizer = () => {
                     htmlContent: convertedNote.content
                 })
             });
-    
+
             const savedNote = await response.json();
             console.log('Note saved successfully:', savedNote);
+            setSaveStatus('saved');
             setActiveStep(3);
         } catch (error) {
             console.error('Error saving note:', error);
+            setSaveStatus('unsaved');
         } finally {
             setSaving(false);
         }
@@ -233,12 +238,19 @@ const NotesDigitizer = () => {
                             )}
                             <Button
                                 variant="contained"
-                                startIcon={<SaveIcon />}
+                                startIcon={saveStatus === 'saved' ? <CheckIcon /> : <SaveIcon />}
                                 onClick={handleSaveNote}
-                                disabled={!selectedCourse || saving}
+                                disabled={!selectedCourse || saving || saveStatus === 'saved'}
                                 fullWidth
+                                sx={{
+                                    bgcolor: saveStatus === 'saved' ? 'success.main' : 'primary.main',
+                                    '&:disabled': {
+                                        bgcolor: saveStatus === 'saved' ? 'success.main' : 'grey.400',
+                                        color: 'white'
+                                    }
+                                }}
                             >
-                                {saving ? 'Saving...' : 'Save Note'}
+                                {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Save Note'}
                             </Button>
                         </Box>
                     )}
