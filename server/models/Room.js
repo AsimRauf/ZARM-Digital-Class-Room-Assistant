@@ -10,6 +10,10 @@ const roomSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    courses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course'
+    }],
     members: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,

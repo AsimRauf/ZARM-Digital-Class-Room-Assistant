@@ -27,6 +27,11 @@ const createCourse = async (req, res) => {
         });
 
         await course.save();
+        
+        // Add course reference to room
+        room.courses.push(course._id);
+        await room.save();
+
         res.status(201).json(course);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -36,7 +41,7 @@ const createCourse = async (req, res) => {
 const getCourses = async (req, res) => {
     try {
         const roomId = req.params.roomId;
-        const room = await Room.findById(roomId);
+        const room = await Room.findById(roomId).populate('courses');
         
         if (!room) {
             return res.status(404).json({ message: "Room not found" });
@@ -45,28 +50,23 @@ const getCourses = async (req, res) => {
         const member = room.members.find(m => m.user.toString() === req.user._id.toString());
         
         if (member.role === 'admin') {
-            const courses = await Course.find({ room: roomId });
-            return res.json(courses);
+            return res.json(room.courses);
         }
 
         if (member.role === 'teacher') {
             if (member.assignedCourse) {
-                const course = await Course.findById(member.assignedCourse);
+                const course = room.courses.find(c => c._id.toString() === member.assignedCourse.toString());
                 return res.json([course]);
             }
             return res.json([]);
         }
 
-        const courses = await Course.find({ 
-            room: roomId,
-            accessLevel: 'all'
-        });
+        const courses = room.courses.filter(course => course.accessLevel === 'all');
         return res.json(courses);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 const updateCourse = async (req, res) => {
     try {
         const { roomId, courseId } = req.params;
