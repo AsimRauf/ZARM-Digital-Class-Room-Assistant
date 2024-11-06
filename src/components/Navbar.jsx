@@ -41,7 +41,7 @@ const Navbar = ({ userData }) => {
             name: 'Lecture Summarizer',
             icon: <VideoLibraryIcon />,
             description: 'Generate concise notes from video lectures',
-            path: '/lecture-summarizer'
+            path: '/video-summarizer'
         },
         {
             name: 'Smart Quiz Generator',

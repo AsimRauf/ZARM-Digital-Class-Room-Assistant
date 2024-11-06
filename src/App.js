@@ -11,6 +11,9 @@ import FileSystem from './components/FileSystem';
 import NotesDisplay from './components/NotesDisplay';
 import ViewNote from './components/ViewNote';
 import CourseChat from './components/CourseChat/CourseChat';
+import VideoSummarizer from './components/VideoSummarizer/VideoSummarizer';
+
+
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -26,6 +29,7 @@ function App() {
     return (
         <Router>
             <Routes>
+                <Route path="/video-summarizer" element={<VideoSummarizer />} />
                 <Route path="/room/:roomId/course/:courseId/chat" element={<CourseChat />} />
                 <Route path="/notes/:roomId/:courseId/:noteId" element={<ViewNote />} />
                 <Route path="/files/:roomId/:courseId/notes" element={<NotesDisplay />} />
