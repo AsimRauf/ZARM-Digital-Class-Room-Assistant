@@ -10,6 +10,7 @@ import NotesDigitizer from './components/NotesDigitizer';
 import FileSystem from './components/FileSystem';
 import NotesDisplay from './components/NotesDisplay';
 import ViewNote from './components/ViewNote';
+import CourseChat from './components/CourseChat/CourseChat';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -25,6 +26,7 @@ function App() {
     return (
         <Router>
             <Routes>
+                <Route path="/room/:roomId/course/:courseId/chat" element={<CourseChat />} />
                 <Route path="/notes/:roomId/:courseId/:noteId" element={<ViewNote />} />
                 <Route path="/files/:roomId/:courseId/notes" element={<NotesDisplay />} />
                 <Route path="/files" element={<FileSystem />} />
@@ -60,4 +62,5 @@ function App() {
     );
 }
 export default App;
+
 

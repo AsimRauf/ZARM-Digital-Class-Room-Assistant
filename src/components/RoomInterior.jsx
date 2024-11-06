@@ -17,6 +17,7 @@ import {
     IconButton,
     Chip
 } from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
 import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -33,6 +34,7 @@ const RoomInterior = () => {
         description: ''
     });
     const [userData, setUserData] = useState(null);
+    const [selectedCourse, setSelectedCourse] = useState(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -66,7 +68,7 @@ const RoomInterior = () => {
             });
             const data = await response.json();
             setRoom(data);
-            
+
             const userMember = data.members.find(m => m.user._id === userData.id);
             setIsAdmin(userMember?.role === 'admin');
             setUserRole(userMember?.role);
@@ -116,61 +118,85 @@ const RoomInterior = () => {
         navigate(`/room/${roomId}/course/${courseId}/settings`);
     };
 
+    const handleCourseClick = (courseId) => {
+        navigate(`/room/${roomId}/course/${courseId}/chat`);
+    };
+
     return (
         <Box>
             <Navbar userData={userData} />
-            
             <Box sx={{ p: 4 }}>
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
                     <Typography variant="h4" gutterBottom>
                         {room?.name}
                     </Typography>
-                    <Chip 
-                        label={`Role: ${userRole}`} 
-                        color="primary" 
-                        sx={{ mb: 2 }}
-                    />
-                    {isAdmin && (
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => setOpenCreateDialog(true)}
-                            sx={{ mt: 2 }}
-                        >
-                            Create New Course
-                        </Button>
-                    )}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                        <Chip
+                            label={`Role: ${userRole?.charAt(0).toUpperCase() + userRole?.slice(1)}`}
+                            color="primary"
+                            sx={{
+                                fontSize: '1rem',
+                                padding: '20px 15px',
+                                fontWeight: 500
+                            }}
+                        />
+
+                        {isAdmin && (
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => setOpenCreateDialog(true)}
+                                sx={{
+                                    padding: '10px 24px',
+                                    fontSize: '1rem',
+                                    fontWeight: 500,
+                                    textTransform: 'none',
+                                    boxShadow: 2
+                                }}
+                            >
+                                Create New Course
+                            </Button>
+                        )}
+                    </Box>
                 </Box>
 
                 <Grid container spacing={3}>
-                    {courses.map((course) => (
-                        <Grid item xs={12} md={6} lg={4} key={course._id}>
+                    {Array.isArray(courses) && courses.map((course) => (
+                        <Grid item xs={12} md={6} lg={4} key={course?._id}>
                             <Card elevation={3}>
                                 <CardContent>
                                     <Typography variant="h6">
-                                        {course.name}
+                                        {course?.name}
                                     </Typography>
                                     <Typography color="textSecondary">
-                                        {course.description}
+                                        {course?.description}
                                     </Typography>
-                                    {isAdmin && (
-                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={() => handleCourseClick(course._id)}
+                                            startIcon={<ChatIcon />}
+                                        >
+                                            Open Chat
+                                        </Button>
+                                        {isAdmin && (
                                             <IconButton
                                                 size="small"
                                                 onClick={() => handleCourseSettings(course._id)}
                                             >
                                                 <SettingsIcon />
                                             </IconButton>
-                                        </Box>
-                                    )}
+                                        )}
+                                    </Box>
                                 </CardContent>
                             </Card>
                         </Grid>
                     ))}
                 </Grid>
 
-                <Dialog 
-                    open={openCreateDialog} 
+                <Dialog
+                    open={openCreateDialog}
                     onClose={() => setOpenCreateDialog(false)}
                     maxWidth="sm"
                     fullWidth
@@ -202,6 +228,20 @@ const RoomInterior = () => {
                         </Button>
                     </DialogActions>
                 </Dialog>
+
+                {selectedCourse && (
+                    <Dialog
+                        open={Boolean(selectedCourse)}
+                        onClose={() => setSelectedCourse(null)}
+                        maxWidth="md"
+                        fullWidth
+                    >
+                        <DialogTitle>{selectedCourse.name} - Chat</DialogTitle>
+                        <DialogContent>
+
+                        </DialogContent>
+                    </Dialog>
+                )}
             </Box>
         </Box>
     );
