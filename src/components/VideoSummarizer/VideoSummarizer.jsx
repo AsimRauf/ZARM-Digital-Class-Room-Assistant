@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navbar from '../Navbar';
-import { styled } from '@mui/material/styles';
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { jwtDecode } from 'jwt-decode';
 import io from 'socket.io-client';
+import ReactPlayer from 'react-player';
 import {
     Box,
     Typography,
@@ -10,6 +12,7 @@ import {
     CircularProgress,
     LinearProgress,
     Paper,
+    TextField,
     Tabs,
     Tab,
     IconButton,
@@ -21,10 +24,10 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
 } from '@mui/material';
-
 import SaveIcon from '@mui/icons-material/Save';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import HistoryIcon from '@mui/icons-material/History';
@@ -33,6 +36,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 const VideoSummarizer = () => {
     const [uploading, setUploading] = useState(false);
     const [userData, setUserData] = useState(null);
+    const [isSaved, setIsSaved] = useState(false);
+    const [videoSource, setVideoSource] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState('');
     const [courses, setCourses] = useState([]);
@@ -41,6 +46,9 @@ const VideoSummarizer = () => {
     const [processedData, setProcessedData] = useState(null);
     const [videoHistory, setVideoHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [youtubeUrl, setYoutubeUrl] = useState('');
+    const [videoDetails, setVideoDetails] = useState(null);
+    const [showPreview, setShowPreview] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingStage, setProcessingStage] = useState('');
@@ -101,6 +109,57 @@ const VideoSummarizer = () => {
             .trim();
     };
 
+    const handleYoutubeUrlSubmit = async () => {
+        if (ReactPlayer.canPlay(youtubeUrl)) {
+            setShowPreview(true);
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/video/youtube-info', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: youtubeUrl })
+            });
+            const data = await response.json();
+            setVideoDetails(data);
+        }
+    };
+
+    const handleProcessYoutube = async () => {
+        setUploading(true);
+        const token = localStorage.getItem('token');
+
+        try {
+            socketRef.current = io('http://localhost:5000');
+            socketRef.current.on('processing:progress', (data) => {
+                setUploadProgress(data.progress);
+                setProcessingStage(data.stage);
+            });
+
+            const response = await fetch('http://localhost:5000/api/video/process-youtube', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: youtubeUrl })
+            });
+
+            const data = await response.json();
+            setProcessedData(data);
+            showSnackbar('Video processed successfully');
+        } catch (error) {
+            showSnackbar('Processing failed', 'error');
+        } finally {
+            setUploading(false);
+            setUploadProgress(0);
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        }
+    };
+
     const fetchVideoHistory = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -117,27 +176,27 @@ const VideoSummarizer = () => {
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-    
+
         const formData = new FormData();
         formData.append('video', file);
         setUploading(true);
-    
+
         try {
             const token = localStorage.getItem('token');
-            
+
             // Socket connection for progress updates
             socketRef.current = io('http://localhost:5000');
             socketRef.current.on('processing:progress', (data) => {
                 setUploadProgress(data.progress);
                 setProcessingStage(data.stage);
             });
-    
+
             const response = await fetch('http://localhost:5000/api/video/process', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-    
+
             const data = await response.json();
             setProcessedData(data); // Just store the processed data, don't save yet
             showSnackbar('Video processed successfully. Select room and course to save.');
@@ -154,12 +213,12 @@ const VideoSummarizer = () => {
             }
         }
     };
-    
+
 
     const handleSaveContent = async () => {
         try {
             const token = localStorage.getItem('token');
-            await fetch('http://localhost:5000/api/video/content/save', {
+            const response = await fetch('http://localhost:5000/api/video-content/save', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -168,15 +227,23 @@ const VideoSummarizer = () => {
                 body: JSON.stringify({
                     roomId: selectedRoom,
                     courseId: selectedCourse,
-                    content: processedData
+                    fileName: processedData.fileName,
+                    summary: processedData.summary,
+                    keyPoints: processedData.keyPoints,
+                    transcription: processedData.transcription
                 })
             });
-            showSnackbar('Content saved successfully');
+
+            if (response.ok) {
+                setIsSaved(true);
+                showSnackbar('Content saved successfully');
+            }
         } catch (error) {
             showSnackbar('Failed to save content', 'error');
         }
     };
-    
+
+
 
 
     const downloadNotes = () => {
@@ -209,73 +276,251 @@ const VideoSummarizer = () => {
     return (
         <Box>
             <Navbar userData={userData} />
-
             <Container maxWidth="lg">
                 <Box sx={{
                     p: 4,
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center'  // Centers children horizontally
+                    alignItems: 'center'
                 }}>
                     <Typography variant="h4" sx={{
                         mb: 3,
                         fontWeight: 600,
-                        textAlign: 'center',  // Centers the text itself
-                        width: '100%'  // Takes full width for proper centering
+                        textAlign: 'center',
+                        width: '100%'
                     }}>
                         AI-Powered Video Intelligence
                     </Typography>
 
-                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                        <Paper sx={{ p: 3, flex: 1 }}>
-                            <input
-                                type="file"
-                                accept="video/*"
-                                hidden
-                                ref={fileInputRef}
-                                onChange={handleFileUpload}
-                            />
+                    <Paper elevation={0} sx={{
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 2,
+                        p: 3,
+                        mb: 4,
+                        width: '100%'
+                    }}>
+                        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                             <Button
-                                variant="contained"
-                                startIcon={uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploading}
-                                fullWidth
-                                sx={{ height: 56 }}
+                                variant={videoSource === 'file' ? 'contained' : 'outlined'}
+                                onClick={() => setVideoSource('file')}
+                                startIcon={<CloudUploadIcon />}
+                                sx={{ flex: 1, height: 40 }}
                             >
-                                {uploading ? 'Transforming Knowledge...' : 'Upload Video Lecture'}
+                                Local Video
                             </Button>
-                        </Paper>
-                        <Button
-                            variant="outlined"
-                            startIcon={<HistoryIcon />}
-                            onClick={() => setShowHistory(!showHistory)}
-                            sx={{ minWidth: 120 }}
-                        >
-                            Archives
-                        </Button>
-                    </Box>
+                            <Button
+                                variant={videoSource === 'youtube' ? 'contained' : 'outlined'}
+                                onClick={() => setVideoSource('youtube')}
+                                startIcon={<YouTubeIcon />}
+                                sx={{
+                                    flex: 1,
+                                    height: 40,
+                                    bgcolor: videoSource === 'youtube' ? '#FF0000' : 'transparent',
+                                    color: videoSource === 'youtube' ? 'white' : '#FF0000',
+                                    borderColor: '#FF0000',
+                                    '&:hover': {
+                                        bgcolor: videoSource === 'youtube' ? '#CC0000' : 'rgba(255, 0, 0, 0.04)',
+                                        borderColor: '#FF0000'
+                                    }
+                                }}
+                            >
+                                YouTube Video
+                            </Button>
+                        </Box>
 
-                    {uploading && (
-                        <Paper sx={{ p: 3, mb: 3 }}>
-                            <Typography variant="h6" gutterBottom>Processing Pipeline</Typography>
-                            <Box sx={{ width: '100%', mb: 2 }}>
+                        {videoSource === 'youtube' && (
+                            <Alert severity="info" sx={{ mb: 2 }}>
+                                ⚡ Processing time depends on video length and internet speed (3-5 mins for 10-min video)
+                            </Alert>
+                        )}
+
+                        <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center', justifyContent: 'center' }}>
+                            {videoSource === 'file' && (
+                                <Paper sx={{ p: 2, flex: 1, maxWidth: 400, }}>
+                                    <input
+                                        type="file"
+                                        accept="video/*"
+                                        hidden
+                                        ref={fileInputRef}
+                                        onChange={handleFileUpload}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        startIcon={uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploading}
+                                        fullWidth
+                                        sx={{ height: 40 }}
+                                    >
+                                        {uploading ? 'Transforming Knowledge...' : 'Upload Video Lecture'}
+                                    </Button>
+                                </Paper>
+                            )}
+                            {videoSource === 'youtube' && (
+                                <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        label="YouTube URL"
+                                        value={youtubeUrl}
+                                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        onClick={handleYoutubeUrlSubmit}
+                                        disabled={!youtubeUrl || uploading}
+                                        sx={{ height: 40 }}
+                                    >
+                                        Load Video
+                                    </Button>
+                                </Box>
+                            )}
+                            <Button
+                                variant="outlined"
+                                startIcon={<HistoryIcon />}
+                                onClick={() => setShowHistory(!showHistory)}
+                                sx={{ height: 40, minWidth: 100 }}
+                            >
+                                Archives
+                            </Button>
+                        </Box>
+
+                        {videoSource === 'youtube' && showPreview && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                                <Accordion sx={{
+                                    mt: 2,
+                                    maxWidth: '600px',
+                                    width: '100%',
+                                    mb: 4
+                                }}>
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        sx={{
+                                            minHeight: '48px',
+                                            '& .MuiAccordionSummary-content': {
+                                                margin: '8px 0',
+                                                display: 'flex',
+                                                justifyContent: 'center'
+                                            }
+                                        }}
+                                    >
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                                            {videoDetails?.title || 'Video Preview'}
+                                        </Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                    }}>
+                                        <Box sx={{
+                                            width: '100%',
+                                            maxWidth: '500px',
+                                            aspectRatio: '16/9'
+                                        }}>
+                                            <ReactPlayer
+                                                url={youtubeUrl}
+                                                width="100%"
+                                                height="100%"
+                                                controls
+                                            />
+                                        </Box>
+                                        <Button
+                                            variant="contained"
+                                            onClick={handleProcessYoutube}
+                                            sx={{ mt: 2, maxWidth: '500px', width: '100%' }}
+                                        >
+                                            Process This Video
+                                        </Button>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Box>
+                        )}
+
+
+                        {uploading && (
+                            <Box sx={{
+                                width: '100%',
+                                maxWidth: 600,
+                                mx: 'auto',
+                                mb: 2,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2
+                            }}>
                                 <LinearProgress
                                     variant="determinate"
                                     value={uploadProgress}
-                                    sx={{ height: 10, borderRadius: 5 }}
+                                    sx={{
+                                        flexGrow: 1,
+                                        height: 8,
+                                        borderRadius: 4
+                                    }}
                                 />
-                            </Box>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                <Typography color="primary">
-                                    {uploadProgress < 25 && "🎥 Extracting Audio Essence..."}
-                                    {uploadProgress >= 25 && uploadProgress < 50 && "🔊 Magnifying Vocal Patterns..."}
-                                    {uploadProgress >= 50 && uploadProgress < 75 && "✨ Weaving Knowledge Threads..."}
-                                    {uploadProgress >= 75 && "🧠 Crystallizing Insights..."}
+                                <Typography variant="body2" color="primary" sx={{ minWidth: 200 }}>
+                                    {uploadProgress < 25 && "🎥 Extracting Audio..."}
+                                    {uploadProgress >= 25 && uploadProgress < 50 && "🔊 Processing Speech..."}
+                                    {uploadProgress >= 50 && uploadProgress < 75 && "✨ Generating Summary..."}
+                                    {uploadProgress >= 75 && "🧠 Finalizing..."}
                                 </Typography>
                             </Box>
-                        </Paper>
-                    )}
+                        )}
+
+                        <Box sx={{
+                            display: 'flex',
+                            gap: 2,
+                            mt: 2,
+                            justifyContent: 'center'
+                        }}>
+                            <FormControl sx={{ width: 180 }}>
+                                <InputLabel>Room</InputLabel>
+                                <Select
+                                    value={selectedRoom}
+                                    onChange={(e) => setSelectedRoom(e.target.value)}
+                                    size="small"
+                                >
+                                    {rooms.map(room => (
+                                        <MenuItem key={room._id} value={room._id}>
+                                            {room.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <FormControl sx={{ width: 180 }}>
+                                <InputLabel>Course</InputLabel>
+                                <Select
+                                    value={selectedCourse}
+                                    onChange={(e) => setSelectedCourse(e.target.value)}
+                                    size="small"
+                                    disabled={!selectedRoom}
+                                >
+                                    {courses.map(course => (
+                                        <MenuItem key={course._id} value={course._id}>
+                                            {course.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <Button
+                                variant="contained"
+                                disabled={!selectedRoom || !selectedCourse || !processedData || isSaved}
+                                onClick={handleSaveContent}
+                                startIcon={<SaveIcon />}
+                                sx={{
+                                    width: 150,
+                                    bgcolor: isSaved ? 'success.main' : 'primary.main',
+                                    '&:disabled': {
+                                        bgcolor: isSaved ? 'success.light' : undefined
+                                    }
+                                }}
+                            >
+                                {isSaved ? 'Saved' : 'Save'}
+                            </Button>
+                        </Box>
+                    </Paper>
 
                     {showHistory && (
                         <Box sx={{ mb: 4 }}>
@@ -315,52 +560,6 @@ const VideoSummarizer = () => {
                             </Grid>
                         </Box>
                     )}
-
-                    <Box sx={{
-                        width: '100%',
-                        display: 'flex',
-                        gap: 2,
-                        mb: 3,
-                        justifyContent: 'center'
-                    }}>
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Select Room</InputLabel>
-                            <Select
-                                value={selectedRoom}
-                                onChange={(e) => setSelectedRoom(e.target.value)}
-                            >
-                                {rooms.map(room => (
-                                    <MenuItem key={room._id} value={room._id}>
-                                        {room.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Select Course</InputLabel>
-                            <Select
-                                value={selectedCourse}
-                                onChange={(e) => setSelectedCourse(e.target.value)}
-                                disabled={!selectedRoom}
-                            >
-                                {courses.map(course => (
-                                    <MenuItem key={course._id} value={course._id}>
-                                        {course.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-                        <Button
-                            variant="contained"
-                            disabled={!selectedRoom || !selectedCourse || !processedData}
-                            onClick={handleSaveContent}
-                            startIcon={<SaveIcon />}
-                        >
-                            Save to Course
-                        </Button>
-                    </Box>
 
                     {processedData && (
                         <Paper sx={{ p: 3 }}>
