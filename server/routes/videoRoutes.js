@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { processVideo, getUserContent, getContent } = require('../controllers/videoTranscriptionController');
+const { processVideo, getUserContent, getContent, processYoutubeVideo, getYoutubeInfo } = require('../controllers/videoTranscriptionController');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -58,6 +58,11 @@ router.post('/process',
 );
 router.get('/content', auth, getUserContent);
 router.get('/content/:id', auth, getContent);
+router.post('/youtube-info', auth, getYoutubeInfo);
+router.post('/process-youtube', auth, processYoutubeVideo);
+
 
 
 module.exports = router;
+
+
