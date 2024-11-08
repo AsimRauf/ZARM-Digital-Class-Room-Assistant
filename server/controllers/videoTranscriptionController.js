@@ -1,9 +1,11 @@
 const { getGeminiModel, generatePrompts } = require('../config/geminiConfig');
 const VideoContent = require('../models/VideoContent');
 const ffmpeg = require('fluent-ffmpeg');
-const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const youtubedl = require('youtube-dl-exec');
+const fs = require('fs');
+
 
 const tempDir = path.join(__dirname, '../temp');
 if (!fs.existsSync(tempDir)) {
@@ -35,12 +37,12 @@ const pollTranscription = async (uploadUrl) => {
     while (true) {
         transcript = await axios.get(
             `https://api.assemblyai.com/v2/transcript/${response.data.id}`,
-            { headers: { 'authorization': process.env.ASSEMBLYAI_API_KEY }}
+            { headers: { 'authorization': process.env.ASSEMBLYAI_API_KEY } }
         );
-        
+
         if (transcript.data.status === 'completed') break;
         if (transcript.data.status === 'error') throw new Error('Transcription failed');
-        
+
         await new Promise(resolve => setTimeout(resolve, 3000));
     }
     return transcript.data;
@@ -58,34 +60,34 @@ const cleanup = (paths) => {
 exports.processVideo = async (req, res) => {
     const videoPath = req.file.path;
     const audioPath = path.join(tempDir, `${Date.now()}.wav`);
-    
+
     try {
         console.log('=== Video Processing Started ===');
         console.log('Video received:', req.file.originalname);
 
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 25,
             stage: 'Extracting Audio Essence'
         });
         await convertToWav(videoPath, audioPath);
 
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 50,
             stage: 'Magnifying Vocal Patterns'
         });
         const audioData = fs.readFileSync(audioPath);
-        const uploadResponse = await axios.post('https://api.assemblyai.com/v2/upload', 
+        const uploadResponse = await axios.post('https://api.assemblyai.com/v2/upload',
             audioData,
-            { headers: { 'authorization': process.env.ASSEMBLYAI_API_KEY }}
+            { headers: { 'authorization': process.env.ASSEMBLYAI_API_KEY } }
         );
 
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 65,
             stage: 'Decoding Speech Patterns'
         });
         const transcriptResult = await pollTranscription(uploadResponse.data.upload_url);
 
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 75,
             stage: 'Weaving Knowledge Threads'
         });
@@ -96,7 +98,7 @@ exports.processVideo = async (req, res) => {
             model.generateContent(generatePrompts.keyPoints(transcriptResult.text))
         ]);
 
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 90,
             stage: 'Finalizing Content'
         });
@@ -111,7 +113,7 @@ exports.processVideo = async (req, res) => {
 
         cleanup([videoPath, audioPath]);
 
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 100,
             stage: 'Processing Complete'
         });
@@ -122,7 +124,7 @@ exports.processVideo = async (req, res) => {
         console.error('=== Processing Error ===');
         console.error(error);
         cleanup([videoPath, audioPath]);
-        req.io.emit('processing:progress', { 
+        req.io.emit('processing:progress', {
             progress: 0,
             stage: 'Processing Failed'
         });
@@ -133,7 +135,7 @@ exports.processVideo = async (req, res) => {
 exports.saveContent = async (req, res) => {
     try {
         const { roomId, courseId, content } = req.body;
-        
+
         const videoContent = await VideoContent.create({
             userId: req.user._id,
             roomId,
@@ -186,3 +188,128 @@ exports.deleteContent = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Add these methods to your existing controller
+exports.getYoutubeInfo = async (req, res) => {
+    try {
+        const { url } = req.body;
+        const info = await ytdl.getInfo(url);
+        res.json({
+            title: info.videoDetails.title,
+            duration: info.videoDetails.lengthSeconds,
+            thumbnail: info.videoDetails.thumbnails[0].url
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+}
+
+
+
+exports.processYoutubeVideo = async (req, res) => {
+    const { url } = req.body;
+    const timestamp = Date.now();
+    const outputFileName = `youtube_${timestamp}.mp3`;
+    const outputPath = path.join(tempDir, outputFileName);
+
+    try {
+        console.log('=== YouTube Processing Started ===');
+        console.log('Output path:', outputPath);
+        
+        req.io.emit('processing:progress', { 
+            progress: 25,
+            stage: 'Downloading Audio'
+        });
+
+        await youtubedl(url, {
+            extractAudio: true,
+            audioFormat: 'mp3',
+            audioQuality: '64K',
+            output: outputPath
+        });
+
+        if (!fs.existsSync(outputPath)) {
+            throw new Error('Audio file was not created');
+        }
+
+        console.log('Audio download complete');
+        console.log('Starting AssemblyAI upload...');
+
+        req.io.emit('processing:progress', { 
+            progress: 50,
+            stage: 'Processing Audio'
+        });
+
+        const audioData = fs.readFileSync(outputPath);
+        console.log('Audio file size:', audioData.length);
+
+        const uploadResponse = await axios.post(
+            'https://api.assemblyai.com/v2/upload',
+            audioData,
+            {
+                headers: {
+                    'authorization': process.env.ASSEMBLYAI_API_KEY,
+                    'content-type': 'application/octet-stream'
+                }
+            }
+        );
+
+        console.log('Upload complete, starting transcription');
+        req.io.emit('processing:progress', { 
+            progress: 75,
+            stage: 'Transcribing Audio'
+        });
+
+        const transcriptResult = await pollTranscription(uploadResponse.data.upload_url);
+        console.log('Transcription complete, generating summaries');
+
+        req.io.emit('processing:progress', { 
+            progress: 90,
+            stage: 'Generating Summaries'
+        });
+
+        const model = getGeminiModel();
+        const [summary, notes, keyPoints] = await Promise.all([
+            model.generateContent(generatePrompts.summary(transcriptResult.text)),
+            model.generateContent(generatePrompts.notes(transcriptResult.text)),
+            model.generateContent(generatePrompts.keyPoints(transcriptResult.text))
+        ]);
+
+        console.log('Summary generation complete');
+
+        const processedData = {
+            fileName: 'YouTube Summary',
+            transcription: transcriptResult.text,
+            summary: summary.response.text(),
+            notes: notes.response.text(),
+            keyPoints: keyPoints.response.text()
+        };
+
+        cleanup([outputPath]);
+        console.log('=== Processing Complete ===');
+        
+        req.io.emit('processing:progress', { 
+            progress: 100,
+            stage: 'Complete'
+        });
+
+        res.json(processedData);
+
+    } catch (error) {
+        console.error('=== Processing Error ===');
+        console.error('Error details:', error);
+        cleanup([outputPath]);
+        req.io.emit('processing:progress', { 
+            progress: 0,
+            stage: 'Error occurred'
+        });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
