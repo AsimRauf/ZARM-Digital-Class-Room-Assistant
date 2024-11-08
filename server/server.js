@@ -13,6 +13,11 @@ const courseRoutes = require('./routes/courseRoutes');
 const geminiRoutes = require('./routes/geminiRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 const courseChatRoutes = require('./routes/courseChatRoutes');
+const videoRoutes = require('./routes/videoRoutes');
+const videoContentRoutes = require('./routes/videoContentRoutes');
+
+
+
 
 dotenv.config();
 
@@ -70,6 +75,8 @@ app.use('/api', courseRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/chat', courseChatRoutes);
+app.use('/api/video', videoRoutes);
+app.use('/api/video-content', videoContentRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
@@ -82,3 +89,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
