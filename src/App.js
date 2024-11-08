@@ -12,6 +12,9 @@ import NotesDisplay from './components/NotesDisplay';
 import ViewNote from './components/ViewNote';
 import CourseChat from './components/CourseChat/CourseChat';
 import VideoSummarizer from './components/VideoSummarizer/VideoSummarizer';
+import SummarizedNotes from './components/SummarizedNotes';
+import ViewSummarizedNote from './components/ViewSummarizedNote';
+
 
 
 
@@ -32,12 +35,13 @@ function App() {
                 <Route path="/video-summarizer" element={<VideoSummarizer />} />
                 <Route path="/room/:roomId/course/:courseId/chat" element={<CourseChat />} />
                 <Route path="/notes/:roomId/:courseId/:noteId" element={<ViewNote />} />
+                <Route path="/summaries/:roomId/:courseId/:contentId" element={<ViewSummarizedNote />} />
                 <Route path="/files/:roomId/:courseId/notes" element={<NotesDisplay />} />
                 <Route path="/files" element={<FileSystem />} />
                 <Route path="/files/:roomId" element={<FileSystem />} />
                 <Route path="/files/:roomId/:courseId" element={<FileSystem />} />
                 <Route path="/files/:roomId/:courseId/notes" element={<FileSystem />} />
-                <Route path="/room/:roomId/settings" element={<RoomSettings />} />
+                <Route path="/files/:roomId/:courseId/summaries" element={<SummarizedNotes />} />                <Route path="/room/:roomId/settings" element={<RoomSettings />} />
                 <Route path="/join-room/:inviteCode" element={<JoinRoom />} />
                 <Route path="/room/:roomId" element={<RoomInterior />} />
                 <Route path="/" element={
