@@ -15,6 +15,7 @@ const noteRoutes = require('./routes/noteRoutes');
 const courseChatRoutes = require('./routes/courseChatRoutes');
 const videoRoutes = require('./routes/videoRoutes');
 const videoContentRoutes = require('./routes/videoContentRoutes');
+const quizRoutes = require('./routes/quizRoutes');
 
 
 
@@ -77,6 +78,8 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/chat', courseChatRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/video-content', videoContentRoutes);
+app.use('/api/quiz', quizRoutes);
+
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
