@@ -1,10 +1,11 @@
 # Zarm Eduspace (Digital Learning Platform)
 
-A modern web application for managing digital notes, course materials, and collaborative learning spaces, enhanced with Gemini AI capabilities.
+A modern web application for managing digital notes, course materials, and collaborative learning spaces, enhanced with Gemini AI and Assembly AI capabilities.
 
 ## Core Features
 
 ### Implemented Features
+
 - Room-based Learning Spaces
   - Create and join rooms
   - Invite system with unique codes
@@ -23,19 +24,33 @@ A modern web application for managing digital notes, course materials, and colla
   - Note organization by courses
   - View, edit, and delete functionality
 
-### AI Features (Powered by Gemini)
+- Video Lecture Intelligence
+  - Video/Audio transcription
+  - AI-powered content analysis
+  - Smart summaries and key points
+  - YouTube video support
+  - Local video processing
+  - Notes organization by rooms/courses
+
+### AI Features
 
 #### Current Implementation
-- Notes Digitizer
+
+- Notes Digitizer (Gemini)
   - Handwritten to digital text conversion
   - Smart formatting preservation
   - Multi-language support
 
+- Video Summarizer (Assembly AI + Gemini)
+  - Automatic transcription
+  - Executive summaries
+  - Enhanced study notes
+  - Key insights extraction
+  - Full transcript access
+  - Progress tracking
+  - YouTube integration
+
 #### Upcoming Features
-- Lecture Summarizer
-  - Video lecture analysis
-  - Key points extraction
-  - Chapter summaries
 
 - Smart Quiz Generator
   - Automatic quiz creation from notes
@@ -53,6 +68,7 @@ A modern web application for managing digital notes, course materials, and colla
 - React.js
 - Material-UI
 - React Router
+- Socket.io Client
 - JWT Authentication
 
 ### Backend
@@ -60,10 +76,12 @@ A modern web application for managing digital notes, course materials, and colla
 - Express.js
 - MongoDB
 - Mongoose
+- Socket.io
 - JWT
 
 ### AI Integration
 - Google Gemini API
+- Assembly AI API
 - Cloud Vision API
 - Natural Language Processing
 
@@ -86,23 +104,24 @@ A modern web application for managing digital notes, course materials, and colla
 - PUT /api/notes/:noteId
 - DELETE /api/notes/:noteId
 
+### Video Content
+- POST /api/video/process
+- POST /api/video/process-youtube
+- GET /api/video/content
+- POST /api/video-content/save
+- DELETE /api/video/content/:id
+- GET /api/video/youtube-info
+
 ## Environment Variables
 
 ### Server (.env)
 ```env
 PORT=5000
-MONGODB_URI=your_mongodb_connection_string
+MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 OPENAI_API_KEY=your_openai_api_key
 CLOUDINARY_CLOUD_NAME=your_cloudinary_name
 CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 GOOGLE_GEMINI_API=your_api_key
-
-## Setup Instructions
-
-1. Clone the repository
-2. Install dependencies:
-```bash
-cd client && npm install
-cd ../server && npm install
+ASSEMBLY_AI_API_KEY=your_assembly_ai_key
