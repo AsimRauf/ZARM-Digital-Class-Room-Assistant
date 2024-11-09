@@ -14,6 +14,12 @@ import CourseChat from './components/CourseChat/CourseChat';
 import VideoSummarizer from './components/VideoSummarizer/VideoSummarizer';
 import SummarizedNotes from './components/SummarizedNotes';
 import ViewSummarizedNote from './components/ViewSummarizedNote';
+import QuizGenerator from './components/QuizGenerator/QuizGenerator';
+import QuizList from './components/Quiz/QuizList';
+import TakeQuiz from './components/Quiz/TakeQuiz';
+import QuizResults from './components/Quiz/QuizResults';
+
+
 
 
 
@@ -32,6 +38,11 @@ function App() {
     return (
         <Router>
             <Routes>
+                <Route path="/quiz-results/:quizId" element={<QuizResults />} />
+                <Route path="/notes/:noteId" element={<ViewNote />} />
+                <Route path="/quiz/:quizId" element={<TakeQuiz />} />
+                <Route path="/quizzes" element={<QuizList />} />
+                <Route path="/quiz-generator" element={<QuizGenerator />} />
                 <Route path="/video-summarizer" element={<VideoSummarizer />} />
                 <Route path="/room/:roomId/course/:courseId/chat" element={<CourseChat />} />
                 <Route path="/notes/:roomId/:courseId/:noteId" element={<ViewNote />} />
@@ -70,5 +81,7 @@ function App() {
     );
 }
 export default App;
+
+
 
 
