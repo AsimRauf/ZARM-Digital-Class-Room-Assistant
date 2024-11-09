@@ -12,8 +12,10 @@ import {
     List,
     ListItem,
     ListItemIcon,
+    ListItemButton,
     ListItemText
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import FolderIcon from '@mui/icons-material/Folder';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -140,6 +142,9 @@ const Navbar = ({ userData }) => {
                 onClose={() => setDrawerOpen(false)}
             >
                 <Box sx={{ width: 250 }} role="presentation">
+                    <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: 'text.secondary' }}>
+                        Learning Tools
+                    </Typography>
                     <List>
                         {aiTools.map((tool) => (
                             <ListItem
@@ -160,6 +165,18 @@ const Navbar = ({ userData }) => {
                             </ListItem>
                         ))}
                     </List>
+
+                    <Typography variant="subtitle2" sx={{ px: 2, py: 1, mt: 2, color: 'text.secondary' }}>
+                        Assessment
+                    </Typography>
+                    <ListItem disablePadding>
+                        <ListItemButton component={Link} to="/quizzes">
+                            <ListItemIcon>
+                                <QuizIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Take Quiz" />
+                        </ListItemButton>
+                    </ListItem>
                 </Box>
             </Drawer>
         </>
