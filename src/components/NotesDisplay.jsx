@@ -87,15 +87,10 @@ const NotesDisplay = () => {
     };
 
     const handleViewNote = (note) => {
-        console.log('Viewing note:', {
-            noteId: note._id,
-            roomId,
-            courseId,
-            noteTitle: note.title
-        });
-        navigate(`/notes/${roomId}/${courseId}/${note._id}`);
+        navigate(`/notes/${note._id}`);
         handleMenuClose();
     };
+    
 
 
 
