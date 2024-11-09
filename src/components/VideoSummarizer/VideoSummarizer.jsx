@@ -484,43 +484,37 @@ const VideoSummarizer = () => {
                                 required
                             />
 
-                            <FormControl sx={{ width: 180, mt: 0 }}>
-                                <InputLabel shrink={!!selectedRoom}>Room</InputLabel>
-                                <Select
-                                    value={selectedRoom}
-                                    onChange={(e) => setSelectedRoom(e.target.value)}
-                                    size="small"
-                                    displayEmpty
-                                    notched
-                                    label="Room"
-                                >
-                                    {rooms.map(room => (
-                                        <MenuItem key={room._id} value={room._id}>
-                                            {room.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                            <TextField
+                                select
+                                label="Room"
+                                value={selectedRoom}
+                                onChange={(e) => setSelectedRoom(e.target.value)}
+                                size="small"
+                                sx={{ width: 180 }}
+                            >
+                                {rooms.map(room => (
+                                    <MenuItem key={room._id} value={room._id}>
+                                        {room.name}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
 
-                            <FormControl sx={{ width: 180, mt: 0 }}>
-                                <InputLabel shrink={!!selectedCourse}>Course</InputLabel>
-                                <Select
-                                    value={selectedCourse}
-                                    onChange={(e) => setSelectedCourse(e.target.value)}
-                                    size="small"
-                                    displayEmpty
-                                    notched
-                                    label="Course"
-                                    disabled={!selectedRoom}
-                                >
-                                    {courses.map(course => (
-                                        <MenuItem key={course._id} value={course._id}>
-                                            {course.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            
+                            <TextField
+                                select
+                                label="Course"
+                                value={selectedCourse}
+                                onChange={(e) => setSelectedCourse(e.target.value)}
+                                size="small"
+                                sx={{ width: 180 }}
+                                disabled={!selectedRoom}
+                            >
+                                {courses.map(course => (
+                                    <MenuItem key={course._id} value={course._id}>
+                                        {course.name}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+
                             <Button
                                 variant="contained"
                                 disabled={!selectedRoom || !selectedCourse || !processedData || isSaved}
@@ -588,7 +582,7 @@ const VideoSummarizer = () => {
                                     variant="scrollable"
                                     scrollButtons="auto"
                                 >
-                                    <Tab label="Executive Summary" />
+                                    <Tab label="Summary" />
                                     <Tab label="Enhanced Notes" />
                                     <Tab label="Key Insights" />
                                     <Tab label="Full Transcript" />
