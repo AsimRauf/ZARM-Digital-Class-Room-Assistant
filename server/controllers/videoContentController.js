@@ -3,7 +3,7 @@ const VideoContent = require('../models/VideoContent');
 const videoContentController = {
     saveVideoContent: async (req, res) => {
         try {
-            const { roomId, courseId, fileName, summary, keyPoints, transcription } = req.body;
+            const { roomId, courseId, fileName, summary, notes, keyPoints, transcription } = req.body;
 
             const videoContent = new VideoContent({
                 userId: req.user._id,
@@ -11,6 +11,7 @@ const videoContentController = {
                 courseId,
                 fileName,
                 summary,
+                notes,
                 keyPoints,
                 transcription,
             });
