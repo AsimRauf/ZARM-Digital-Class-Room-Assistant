@@ -60,6 +60,7 @@ const ViewSummarizedNote = () => {
     }, [contentId]);
 
     const cleanHtmlContent = (content) => {
+        if (!content) return '';
         return content
             .replace(/```html\n?/g, '')
             .replace(/```\n?/g, '')
@@ -140,6 +141,11 @@ const ViewSummarizedNote = () => {
                                 Summary
                             </Typography>
                             <div dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.summary) }} />
+
+                            <Typography variant="h6" color="primary" gutterBottom>
+                                Notes
+                            </Typography>
+                            <div dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content?.notes) }} />
 
                             <Typography variant="h6" color="primary" gutterBottom>
                                 Key Points
