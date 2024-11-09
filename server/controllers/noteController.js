@@ -49,6 +49,21 @@ const getNotes = async (req, res) => {
     }
 };
 
+const getNotebyId = async (req, res) => {
+    try {
+        const note = await Note.findById(req.params.noteId)
+            .select('title htmlContent content createdAt lastModified');
+        
+        if (!note) {
+            return res.status(404).json({ message: "Note not found" });
+        }
+        
+        res.json(note);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 const updateNote = async (req, res) => {
     try {
@@ -129,6 +144,7 @@ module.exports = {
     getNotes,
     updateNote,
     deleteNote,
-    downloadNote
+    downloadNote,
+    getNotebyId
 };
 
