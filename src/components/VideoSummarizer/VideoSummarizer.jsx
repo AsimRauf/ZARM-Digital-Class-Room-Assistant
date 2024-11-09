@@ -46,6 +46,7 @@ const VideoSummarizer = () => {
     const [processedData, setProcessedData] = useState(null);
     const [videoHistory, setVideoHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [noteTitle, setNoteTitle] = useState('');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [videoDetails, setVideoDetails] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
@@ -227,8 +228,9 @@ const VideoSummarizer = () => {
                 body: JSON.stringify({
                     roomId: selectedRoom,
                     courseId: selectedCourse,
-                    fileName: processedData.fileName,
+                    fileName: noteTitle || processedData.fileName,
                     summary: processedData.summary,
+                    notes: processedData.notes,
                     keyPoints: processedData.keyPoints,
                     transcription: processedData.transcription
                 })
@@ -466,19 +468,31 @@ const VideoSummarizer = () => {
                                 </Typography>
                             </Box>
                         )}
-
                         <Box sx={{
                             display: 'flex',
                             gap: 2,
                             mt: 2,
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            alignItems: 'center'
                         }}>
-                            <FormControl sx={{ width: 180 }}>
-                                <InputLabel>Room</InputLabel>
+                            <TextField
+                                label="Note Title"
+                                value={noteTitle}
+                                onChange={(e) => setNoteTitle(e.target.value)}
+                                size="small"
+                                sx={{ width: 250 }}
+                                required
+                            />
+
+                            <FormControl sx={{ width: 180, mt: 0 }}>
+                                <InputLabel shrink={!!selectedRoom}>Room</InputLabel>
                                 <Select
                                     value={selectedRoom}
                                     onChange={(e) => setSelectedRoom(e.target.value)}
                                     size="small"
+                                    displayEmpty
+                                    notched
+                                    label="Room"
                                 >
                                     {rooms.map(room => (
                                         <MenuItem key={room._id} value={room._id}>
@@ -488,12 +502,15 @@ const VideoSummarizer = () => {
                                 </Select>
                             </FormControl>
 
-                            <FormControl sx={{ width: 180 }}>
-                                <InputLabel>Course</InputLabel>
+                            <FormControl sx={{ width: 180, mt: 0 }}>
+                                <InputLabel shrink={!!selectedCourse}>Course</InputLabel>
                                 <Select
                                     value={selectedCourse}
                                     onChange={(e) => setSelectedCourse(e.target.value)}
                                     size="small"
+                                    displayEmpty
+                                    notched
+                                    label="Course"
                                     disabled={!selectedRoom}
                                 >
                                     {courses.map(course => (
@@ -503,7 +520,7 @@ const VideoSummarizer = () => {
                                     ))}
                                 </Select>
                             </FormControl>
-
+                            
                             <Button
                                 variant="contained"
                                 disabled={!selectedRoom || !selectedCourse || !processedData || isSaved}
@@ -520,6 +537,7 @@ const VideoSummarizer = () => {
                                 {isSaved ? 'Saved' : 'Save'}
                             </Button>
                         </Box>
+
                     </Paper>
 
                     {showHistory && (
