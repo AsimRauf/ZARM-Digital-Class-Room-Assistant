@@ -230,6 +230,9 @@ const FileSystem = () => {
                             if (folder.id === 'digital-notes') {
                                 navigate(`/files/${roomId}/${courseId}/notes`);
                             }
+                            else if (folder.id === 'summaries') {
+                                navigate(`/files/${roomId}/${courseId}/summaries`);
+                            }
                         }}
                     >
                         <ListItemIcon>
