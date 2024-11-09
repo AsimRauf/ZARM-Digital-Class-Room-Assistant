@@ -9,6 +9,7 @@ import {
     FormControl,
     InputLabel,
     Select,
+    TextField,
     MenuItem,
     Stepper,
     Step,
@@ -27,6 +28,7 @@ const NotesDigitizer = () => {
     const [activeStep, setActiveStep] = useState(0);
     const [selectedFile, setSelectedFile] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [noteTitle, setNoteTitle] = useState('');
     const [convertedNote, setConvertedNote] = useState(null);
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState('');
@@ -100,7 +102,7 @@ const NotesDigitizer = () => {
     };
 
     const handleSaveNote = async () => {
-        if (!selectedRoom || !selectedCourse || !convertedNote) return;
+        if (!selectedRoom || !selectedCourse || !convertedNote || !noteTitle) return;
         setSaving(true);
         setSaveStatus('saving');
 
@@ -113,7 +115,7 @@ const NotesDigitizer = () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    title: convertedNote.title,
+                    title: noteTitle,
                     content: convertedNote.content,
                     htmlContent: convertedNote.content
                 })
@@ -130,6 +132,7 @@ const NotesDigitizer = () => {
             setSaving(false);
         }
     };
+    
     const fetchCourses = async (roomId) => {
         try {
             const token = localStorage.getItem('token');
@@ -207,6 +210,15 @@ const NotesDigitizer = () => {
                                     className="note-content"
                                 />
                             </Paper>
+
+                            <TextField
+                                fullWidth
+                                label="Note Title"
+                                value={noteTitle}
+                                onChange={(e) => setNoteTitle(e.target.value)}
+                                sx={{ mb: 2 }}
+                                required
+                            />
 
                             <FormControl fullWidth sx={{ mb: 2 }}>
                                 <InputLabel>Select Room</InputLabel>
