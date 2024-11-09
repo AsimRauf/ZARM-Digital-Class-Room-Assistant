@@ -18,7 +18,7 @@ import { jwtDecode } from 'jwt-decode';
 const ViewNote = () => {
     const [note, setNote] = useState(null);
     const [userData, setUserData] = useState(null);
-    const { roomId, courseId, noteId } = useParams();
+    const { noteId } = useParams();
     const downloadOptions = [
         { label: 'PDF', value: 'pdf' },
         { label: 'DOCX', value: 'docx' }
@@ -45,14 +45,13 @@ const ViewNote = () => {
     const fetchNote = async () => {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`http://localhost:5000/api/notes/rooms/${roomId}/courses/${courseId}`, {
+            const response = await fetch(`http://localhost:5000/api/notes/${noteId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            const notes = await response.json();
-            const currentNote = notes.find(note => note._id === noteId);
-            setNote(currentNote);
+            const data = await response.json();
+            setNote(data);
         } catch (error) {
             console.error('Error:', error);
         }
