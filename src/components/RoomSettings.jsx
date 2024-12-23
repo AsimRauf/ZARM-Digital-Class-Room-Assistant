@@ -12,8 +12,6 @@ import {
     Paper,
     Button,
     Avatar,
-    Drawer,
-    ListItemIcon,
     IconButton,
     Dialog,
     DialogTitle,
@@ -23,12 +21,7 @@ import {
     InputLabel,
 
 } from '@mui/material';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import QuizIcon from '@mui/icons-material/Quiz';
-import ChatIcon from '@mui/icons-material/Chat';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { jwtDecode } from 'jwt-decode';
 
 const RoomSettings = () => {
@@ -36,7 +29,9 @@ const RoomSettings = () => {
     const navigate = useNavigate();
     const [room, setRoom] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [courses, setCourses] = useState([]);
+    const [selectedCourse, setSelectedCourse] = useState('');
+    const [showCourseSelect, setShowCourseSelect] = useState(false);
     const [userData, setUserData] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
     const [showRoleConfirm, setShowRoleConfirm] = useState(false);
@@ -76,32 +71,8 @@ const RoomSettings = () => {
         }
     };
 
-    const aiTools = [
-        {
-            name: 'Notes Digitizer',
-            icon: <AutoFixHighIcon />,
-            description: 'Convert handwritten notes to digital text'
-        },
-        {
-            name: 'Lecture Summarizer',
-            icon: <VideoLibraryIcon />,
-            description: 'Generate concise notes from video lectures'
-        },
-        {
-            name: 'Smart Quiz Generator',
-            icon: <QuizIcon />,
-            description: 'Create quizzes from notes and lecture summaries'
-        },
-        {
-            name: 'Study Assistant Chat',
-            icon: <ChatIcon />,
-            description: 'Interactive learning support'
-        }
-    ];
 
-    const [courses, setCourses] = useState([]);
-    const [selectedCourse, setSelectedCourse] = useState('');
-    const [showCourseSelect, setShowCourseSelect] = useState(false);
+
 
     useEffect(() => {
         fetchCourses();
@@ -213,46 +184,57 @@ const RoomSettings = () => {
     return (
         <Box>
             <Navbar
-                onMenuClick={() => setDrawerOpen(true)}
                 userData={userData}
             />
 
-            <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-            >
-                <Box sx={{ width: 250 }} role="presentation">
-                    <List>
-                        {aiTools.map((tool) => (
-                            <ListItem button key={tool.name}>
-                                <ListItemIcon>
-                                    {tool.icon}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={tool.name}
-                                    secondary={tool.description}
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            </Drawer>
 
             <Box sx={{ p: 3 }}>
-                <Paper elevation={3} sx={{ p: 3 }}>
-                    <Typography variant="h4" gutterBottom>
+                <Paper elevation={0} sx={{
+                    p: 4,
+                    borderRadius: '20px',
+                    border: '1px solid rgba(59, 30, 84, 0.1)',
+                    background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9))',
+                    backdropFilter: 'blur(10px)'
+                }}>
+                    <Typography variant="h4" gutterBottom sx={{
+                        color: '#3B1E54',
+                        fontWeight: 700,
+                        position: 'relative',
+                        '&:after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: -8,
+                            left: 0,
+                            width: '60px',
+                            height: '3px',
+                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                            borderRadius: '2px'
+                        }
+                    }}>
                         Room Settings
                     </Typography>
+
                     {room && (
                         <>
-                            <Typography variant="h5" gutterBottom>
+                            <Typography variant="h5" gutterBottom sx={{
+                                color: '#3B1E54',
+                                fontWeight: 600,
+                                mt: 3
+                            }}>
                                 {room.name}
                             </Typography>
-                            <Typography variant="body1" color="textSecondary" gutterBottom>
+                            <Typography variant="body1" sx={{
+                                color: 'rgba(59, 30, 84, 0.6)',
+                                mb: 4
+                            }}>
                                 {room.description}
                             </Typography>
-                            <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                            <Typography variant="h6" sx={{
+                                mt: 4,
+                                mb: 3,
+                                color: '#3B1E54',
+                                fontWeight: 600
+                            }}>
                                 Members
                             </Typography>
                             <List>
@@ -262,24 +244,64 @@ const RoomSettings = () => {
                                         sx={{
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'space-between'
+                                            justifyContent: 'space-between',
+                                            p: 2,
+                                            mb: 1,
+                                            borderRadius: '12px',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                            border: '1px solid rgba(59, 30, 84, 0.08)',
+                                            transition: 'all 0.3s ease',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(59, 30, 84, 0.04)',
+                                                transform: 'translateX(4px)'
+                                            }
                                         }}
                                     >
-                                        <Avatar src={member.user.profileImage} />
-                                        <ListItemText
-                                            primary={member.user.username || member.user.email}
-                                            secondary={member.user.email}
-                                        />
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2
+                                        }}>
+                                            <Avatar
+                                                src={member.user.profileImage}
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    border: '2px solid rgba(59, 30, 84, 0.1)'
+                                                }}
+                                            />
+                                            <ListItemText
+                                                primary={member.user.username || member.user.email}
+                                                secondary={member.user.email}
+                                                sx={{
+                                                    '& .MuiListItemText-primary': {
+                                                        color: '#3B1E54',
+                                                        fontWeight: 500
+                                                    },
+                                                    '& .MuiListItemText-secondary': {
+                                                        color: 'rgba(59, 30, 84, 0.6)'
+                                                    }
+                                                }}
+                                            />
+                                        </Box>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2
+                                        }}>
                                             <Select
                                                 value={member.role}
                                                 onChange={(e) => {
-                                                    console.log('Role selected:', e.target.value); // Add this log
                                                     setSelectedMember(member.user._id);
                                                     setNewRole(e.target.value);
                                                     setShowRoleConfirm(true);
                                                 }}
-                                                sx={{ minWidth: 120 }}
+                                                sx={{
+                                                    minWidth: 120,
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: '10px'
+                                                    }
+                                                }}
                                             >
                                                 <MenuItem value="admin">Admin</MenuItem>
                                                 <MenuItem value="teacher">Teacher</MenuItem>
@@ -292,6 +314,11 @@ const RoomSettings = () => {
                                                         setSelectedMember(member.user._id);
                                                         setShowDeleteConfirm(true);
                                                     }}
+                                                    sx={{
+                                                        '&:hover': {
+                                                            background: 'rgba(255, 82, 82, 0.08)'
+                                                        }
+                                                    }}
                                                 >
                                                     <DeleteIcon />
                                                 </IconButton>
@@ -301,29 +328,84 @@ const RoomSettings = () => {
                                 ))}
                             </List>
 
-                            {/* Role Confirmation Dialog */}
-                            <Dialog open={showRoleConfirm} onClose={() => setShowRoleConfirm(false)}>
-                                <DialogTitle>Confirm Role Change</DialogTitle>
-                                <DialogContent>
+                            <Dialog
+                                open={showRoleConfirm}
+                                onClose={() => setShowRoleConfirm(false)}
+                                PaperProps={{
+                                    sx: {
+                                        borderRadius: '20px',
+                                        boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                                        animation: 'slideIn 0.3s ease-out',
+                                        '@keyframes slideIn': {
+                                            from: { opacity: 0, transform: 'translateY(-20px)' },
+                                            to: { opacity: 1, transform: 'translateY(0)' }
+                                        }
+                                    }
+                                }}
+                            >
+                                <DialogTitle sx={{
+                                    background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                    color: 'white',
+                                    borderRadius: '20px 20px 0 0'
+                                }}>
+                                    Confirm Role Change
+                                </DialogTitle>
+                                <DialogContent sx={{ mt: 2, p: 3 }}>
                                     Are you sure you want to change this member's role?
                                 </DialogContent>
-                                <DialogActions>
-                                    <Button onClick={() => setShowRoleConfirm(false)}>Cancel</Button>
-                                    <Button onClick={handleRoleChangeConfirm} color="primary">
+                                <DialogActions sx={{ p: 2 }}>
+                                    <Button
+                                        onClick={() => setShowRoleConfirm(false)}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            color: '#3B1E54'
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={handleRoleChangeConfirm}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                            color: 'white',
+                                            '&:hover': {
+                                                background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                            }
+                                        }}
+                                    >
                                         Confirm
                                     </Button>
                                 </DialogActions>
                             </Dialog>
 
-                            {/* Course Selection Dialog */}
-                            <Dialog open={showCourseSelect} onClose={() => setShowCourseSelect(false)}>
-                                <DialogTitle>Assign Course to Teacher</DialogTitle>
-                                <DialogContent>
+                            <Dialog
+                                open={showCourseSelect}
+                                onClose={() => setShowCourseSelect(false)}
+                                PaperProps={{
+                                    sx: {
+                                        borderRadius: '20px',
+                                        boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                                        animation: 'slideIn 0.3s ease-out'
+                                    }
+                                }}
+                            >
+                                <DialogTitle sx={{
+                                    background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                    color: 'white',
+                                    borderRadius: '20px 20px 0 0'
+                                }}>
+                                    Assign Course to Teacher
+                                </DialogTitle>
+                                <DialogContent sx={{ mt: 2, p: 3 }}>
                                     <FormControl fullWidth sx={{ mt: 2 }}>
                                         <InputLabel>Select Course</InputLabel>
                                         <Select
                                             value={selectedCourse}
                                             onChange={(e) => setSelectedCourse(e.target.value)}
+                                            sx={{
+                                                borderRadius: '10px'
+                                            }}
                                         >
                                             {courses.map(course => (
                                                 <MenuItem key={course._id} value={course._id}>
@@ -333,24 +415,74 @@ const RoomSettings = () => {
                                         </Select>
                                     </FormControl>
                                 </DialogContent>
-                                <DialogActions>
-                                    <Button onClick={() => setShowCourseSelect(false)}>Cancel</Button>
-                                    <Button onClick={handleTeacherAssignment} color="primary">
+                                <DialogActions sx={{ p: 2 }}>
+                                    <Button
+                                        onClick={() => setShowCourseSelect(false)}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            color: '#3B1E54'
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={handleTeacherAssignment}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                            color: 'white',
+                                            '&:hover': {
+                                                background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                            }
+                                        }}
+                                    >
                                         Assign Course
                                     </Button>
                                 </DialogActions>
                             </Dialog>
-                            <Dialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
-                                <DialogTitle>Remove Member</DialogTitle>
-                                <DialogContent>
+
+                            <Dialog
+                                open={showDeleteConfirm}
+                                onClose={() => setShowDeleteConfirm(false)}
+                                PaperProps={{
+                                    sx: {
+                                        borderRadius: '20px',
+                                        boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                                        animation: 'slideIn 0.3s ease-out'
+                                    }
+                                }}
+                            >
+                                <DialogTitle sx={{
+                                    background: 'linear-gradient(45deg, #FF5252, #FF1744)',
+                                    color: 'white',
+                                    borderRadius: '20px 20px 0 0'
+                                }}>
+                                    Remove Member
+                                </DialogTitle>
+                                <DialogContent sx={{ mt: 2, p: 3 }}>
                                     Are you sure you want to remove this member from the room?
                                 </DialogContent>
-                                <DialogActions>
-                                    <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                                <DialogActions sx={{ p: 2 }}>
+                                    <Button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            color: '#3B1E54'
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
                                     <Button
                                         onClick={() => handleDeleteMember(selectedMember)}
-                                        color="error"
                                         startIcon={<DeleteIcon />}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(45deg, #FF5252, #FF1744)',
+                                            color: 'white',
+                                            '&:hover': {
+                                                background: 'linear-gradient(45deg, #FF1744, #D50000)'
+                                            }
+                                        }}
                                     >
                                         Remove
                                     </Button>
@@ -360,6 +492,7 @@ const RoomSettings = () => {
                     )}
                 </Paper>
             </Box>
+
         </Box>
     );
 };

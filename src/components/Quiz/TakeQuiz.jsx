@@ -11,9 +11,13 @@ import {
     Button,
     LinearProgress,
     Chip,
-    Alert
+    Alert,
+    Dialog,
+    DialogContent,
+    DialogActions
 } from '@mui/material';
 import TimerIcon from '@mui/icons-material/Timer';
+import QuizIcon from '@mui/icons-material/Quiz';
 import Navbar from '../Navbar';
 
 const TakeQuiz = () => {
@@ -26,6 +30,14 @@ const TakeQuiz = () => {
     const [questionTimer, setQuestionTimer] = useState(60);
     const [isQuestionDisabled, setIsQuestionDisabled] = useState(false);
     const [quizCompleted, setQuizCompleted] = useState(false);
+    const [confirmSubmit, setConfirmSubmit] = useState(false);
+    const [quizConfig, setQuizConfig] = useState({
+        totalTime: 3600, // Default 1 hour
+        questionTime: 60  // Default 60 seconds per question
+    });
+    const [overallTimer, setOverallTimer] = useState(null);
+    const [attemptedQuestions, setAttemptedQuestions] = useState({});
+    const [remainingTime, setRemainingTime] = useState(null);
 
     useEffect(() => {
         fetchQuiz();
@@ -38,6 +50,13 @@ const TakeQuiz = () => {
                 options: shuffleArray([...question.options])
             }));
             setShuffledQuestions(shuffleArray(shuffled));
+            // Set quiz configuration if available
+            if (quiz.config) {
+                setQuizConfig({
+                    totalTime: quiz.config.timeLimit || 3600,
+                    questionTime: quiz.config.questionTime || 60
+                });
+            }
         }
     }, [quiz]);
 
@@ -77,32 +96,23 @@ const TakeQuiz = () => {
             setQuiz(data);
         } catch (error) {
             console.error('Error fetching quiz:', error);
-            /*************  ✨ Codeium Command ⭐  *************/
-            /**
-             * Fetches the quiz with the given id from the server and sets the component's state
-             * with the received data.
-             * @param {string} quizId - The id of the quiz to fetch
-             * @throws {Error} - If there is an error fetching the quiz
-             */
-            /******  e2da5e3c-fe70-49bc-90ed-af68b522acb8  *******/
-}
+        }
     };
-
 
     const handleNext = () => {
         if (currentQuestion < shuffledQuestions.length - 1) {
             setCurrentQuestion(currentQuestion + 1);
-            setQuestionTimer(60);
+            setQuestionTimer(quizConfig.questionTime);
             setIsQuestionDisabled(false);
         } else {
-            handleSubmit();
+            setConfirmSubmit(true);
         }
     };
 
     const handlePrevious = () => {
         if (currentQuestion > 0) {
             setCurrentQuestion(currentQuestion - 1);
-            setQuestionTimer(60);
+            setQuestionTimer(quizConfig.questionTime);
             setIsQuestionDisabled(false);
         }
     };
@@ -118,7 +128,6 @@ const TakeQuiz = () => {
     };
 
     const handleAnswerSelect = (answer) => {
-        console.log('Selected answer:', answer); // Debug selected answer
         setUserAnswers({
             ...userAnswers,
             [currentQuestion]: answer
@@ -129,30 +138,19 @@ const TakeQuiz = () => {
         setQuizCompleted(true);
         const score = calculateScore();
         const token = localStorage.getItem('token');
-    
-        console.log('User answers before submit:', userAnswers); // Debug all answers
-    
-        const formattedAnswers = shuffledQuestions.map((question, index) => {
-            const selectedAnswer = userAnswers[index];
-            console.log(`Question ${index}:`, {
-                question: question.question,
-                selected: selectedAnswer,
-                correct: question.correctAnswer
-            });
-            
-            return {
-                questionId: question._id,
-                type: 'mcq',
-                question: question.question,
-                options: question.options,
-                selectedAnswer: selectedAnswer || 'Unanswered',
-                correctAnswer: question.correctAnswer,
-                explanation: question.explanation,
-                points: question.points,
-                isCorrect: selectedAnswer === question.correctAnswer
-            };
-        });
-    
+
+        const formattedAnswers = shuffledQuestions.map((question, index) => ({
+            questionId: question._id,
+            type: 'mcq',
+            question: question.question,
+            options: question.options,
+            selectedAnswer: userAnswers[index] || 'Unanswered',
+            correctAnswer: question.correctAnswer,
+            explanation: question.explanation,
+            points: question.points,
+            isCorrect: userAnswers[index] === question.correctAnswer
+        }));
+
         try {
             const response = await fetch('http://localhost:5000/api/quiz/attempt', {
                 method: 'POST',
@@ -166,40 +164,59 @@ const TakeQuiz = () => {
                     answers: formattedAnswers
                 })
             });
-            
+
             const savedAttempt = await response.json();
-            console.log('Saved attempt:', savedAttempt); // Debug saved data
-            
-            setTimeout(() => {
-                navigate('/quizzes');
-            }, 2000);
+            navigate(`/quiz-results/${quizId}`);
         } catch (error) {
             console.error('Error saving attempt:', error);
         }
     };
-    
-    
 
     if (!quiz || !shuffledQuestions.length) return null;
 
     return (
-        <Box>
+        <Box sx={{ bgcolor: '#F8F9FC', minHeight: '100vh' }}>
             <Navbar />
-            <Container maxWidth="md" sx={{ mt: 4 }}>
+            <Container maxWidth="md" sx={{ py: 4 }}>
                 {quizCompleted && (
-                    <Alert severity="success" sx={{ mb: 2 }}>
-                        Quiz completed! Your score: {calculateScore().toFixed(2)}%
+                    <Alert severity="success" sx={{ mb: 2, borderRadius: '12px' }}>
+                        Quiz completed! Redirecting to results...
                     </Alert>
                 )}
 
-                <Paper sx={{ p: 3, mb: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h5">{quiz.title}</Typography>
+                <Paper sx={{
+                    p: 4,
+                    borderRadius: '20px',
+                    boxShadow: '0 8px 32px rgba(59, 30, 84, 0.12)'
+                }}>
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 3
+                    }}>
+                        <Typography variant="h5" sx={{ color: '#3B1E54', fontWeight: 600 }}>
+                            {quiz.title}
+                        </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Chip
                                 icon={<TimerIcon />}
-                                label={`${questionTimer} seconds`}
+                                label={`${questionTimer}s`}
                                 color={questionTimer < 10 ? "error" : "primary"}
+                                sx={{
+                                    fontWeight: 500,
+                                    animation: questionTimer < 10 ? 'pulse 1s infinite' : 'none',
+                                    '@keyframes pulse': {
+                                        '0%': { transform: 'scale(1)' },
+                                        '50%': { transform: 'scale(1.05)' },
+                                        '100%': { transform: 'scale(1)' }
+                                    }
+                                }}
+                            />
+                            <Chip
+                                label={`${currentQuestion + 1}/${shuffledQuestions.length}`}
+                                color="primary"
+                                variant="outlined"
                             />
                         </Box>
                     </Box>
@@ -207,14 +224,18 @@ const TakeQuiz = () => {
                     <LinearProgress
                         variant="determinate"
                         value={(currentQuestion + 1) / shuffledQuestions.length * 100}
-                        sx={{ mb: 3 }}
+                        sx={{
+                            mb: 3,
+                            height: 8,
+                            borderRadius: 4,
+                            bgcolor: 'rgba(59, 30, 84, 0.1)',
+                            '& .MuiLinearProgress-bar': {
+                                bgcolor: '#3B1E54'
+                            }
+                        }}
                     />
 
-                    <Typography variant="h6" gutterBottom>
-                        Question {currentQuestion + 1} of {shuffledQuestions.length}
-                    </Typography>
-
-                    <Typography variant="body1" sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 3, color: '#3B1E54' }}>
                         {shuffledQuestions[currentQuestion].question}
                     </Typography>
 
@@ -223,28 +244,54 @@ const TakeQuiz = () => {
                         onChange={(e) => handleAnswerSelect(e.target.value)}
                     >
                         {shuffledQuestions[currentQuestion].options.map((option, index) => (
-                            <FormControlLabel
+                            <Paper
                                 key={index}
-                                value={option}
-                                control={<Radio />}
-                                label={option}
-                                disabled={isQuestionDisabled}
+                                elevation={0}
                                 sx={{
-                                    mb: 1,
-                                    p: 1,
-                                    width: '100%',
+                                    mb: 2,
+                                    border: '1px solid rgba(59, 30, 84, 0.1)',
+                                    borderRadius: '12px',
+                                    transition: 'all 0.2s ease',
                                     opacity: isQuestionDisabled ? 0.7 : 1,
-                                    '&:hover': { bgcolor: !isQuestionDisabled && 'action.hover' }
+                                    '&:hover': {
+                                        transform: !isQuestionDisabled && 'translateX(8px)',
+                                        bgcolor: !isQuestionDisabled && 'rgba(59, 30, 84, 0.04)'
+                                    }
                                 }}
-                            />
+                            >
+                                <FormControlLabel
+                                    value={option}
+                                    control={<Radio />}
+                                    label={option}
+                                    disabled={isQuestionDisabled}
+                                    sx={{
+                                        m: 0,
+                                        p: 2,
+                                        width: '100%'
+                                    }}
+                                />
+                            </Paper>
                         ))}
                     </RadioGroup>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        mt: 4
+                    }}>
                         <Button
                             variant="outlined"
                             onClick={handlePrevious}
                             disabled={currentQuestion === 0 || isQuestionDisabled}
+                            sx={{
+                                borderRadius: '10px',
+                                borderColor: '#3B1E54',
+                                color: '#3B1E54',
+                                '&:hover': {
+                                    borderColor: '#5E2E87',
+                                    bgcolor: 'rgba(59, 30, 84, 0.04)'
+                                }
+                            }}
                         >
                             Previous
                         </Button>
@@ -252,9 +299,13 @@ const TakeQuiz = () => {
                         {currentQuestion === shuffledQuestions.length - 1 ? (
                             <Button
                                 variant="contained"
-                                color="primary"
-                                onClick={handleSubmit}
+                                onClick={() => setConfirmSubmit(true)}
                                 disabled={isQuestionDisabled}
+                                sx={{
+                                    borderRadius: '10px',
+                                    bgcolor: '#3B1E54',
+                                    '&:hover': { bgcolor: '#5E2E87' }
+                                }}
                             >
                                 Submit Quiz
                             </Button>
@@ -263,6 +314,11 @@ const TakeQuiz = () => {
                                 variant="contained"
                                 onClick={handleNext}
                                 disabled={!userAnswers[currentQuestion] || isQuestionDisabled}
+                                sx={{
+                                    borderRadius: '10px',
+                                    bgcolor: '#3B1E54',
+                                    '&:hover': { bgcolor: '#5E2E87' }
+                                }}
                             >
                                 Next
                             </Button>
@@ -270,6 +326,48 @@ const TakeQuiz = () => {
                     </Box>
                 </Paper>
             </Container>
+
+            <Dialog
+                open={confirmSubmit}
+                onClose={() => setConfirmSubmit(false)}
+                PaperProps={{
+                    sx: {
+                        borderRadius: '20px',
+                        p: 2
+                    }
+                }}
+            >
+                <DialogContent>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <QuizIcon sx={{ fontSize: 48, color: '#3B1E54', mb: 2 }} />
+                        <Typography variant="h6" gutterBottom>
+                            Submit Quiz?
+                        </Typography>
+                        <Typography color="text.secondary">
+                            You won't be able to change your answers after submission.
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setConfirmSubmit(false)}
+                        sx={{ borderRadius: '10px' }}
+                    >
+                        Review Answers
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSubmit}
+                        sx={{
+                            borderRadius: '10px',
+                            bgcolor: '#3B1E54',
+                            '&:hover': { bgcolor: '#5E2E87' }
+                        }}
+                    >
+                        Submit Quiz
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

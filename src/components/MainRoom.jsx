@@ -349,6 +349,18 @@ const MainRoom = () => {
                         startIcon={<AddCircleIcon />}
                         onClick={() => setOpenCreateModal(true)}
                         size="large"
+                        sx={{
+                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                            borderRadius: '12px',
+                            padding: '12px 24px',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 4px 15px rgba(59, 30, 84, 0.25)',
+                            '&:hover': {
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 8px 20px rgba(59, 30, 84, 0.3)',
+                                background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                            }
+                        }}
                     >
                         Create Room
                     </Button>
@@ -357,12 +369,46 @@ const MainRoom = () => {
                         startIcon={<GroupAddIcon />}
                         size="large"
                         onClick={() => setOpenJoinModal(true)}
+                        sx={{
+                            borderRadius: '12px',
+                            padding: '12px 24px',
+                            borderColor: '#3B1E54',
+                            color: '#3B1E54',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'translateY(-2px)',
+                                borderColor: '#5E2E87',
+                                background: 'rgba(59, 30, 84, 0.04)'
+                            }
+                        }}
                     >
                         Join Room
                     </Button>
                 </Box>
-                <Dialog open={shareDialogOpen} onClose={() => setShareDialogOpen(false)}>
-                    <DialogTitle>Share Room</DialogTitle>
+
+                {/* Share Room Modal */}
+                <Dialog
+                    open={shareDialogOpen}
+                    onClose={() => setShareDialogOpen(false)}
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '20px',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' }
+                            }
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{
+                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                        color: 'white',
+                        borderRadius: '20px 20px 0 0'
+                    }}>
+                        Share Room
+                    </DialogTitle>
                     <DialogContent>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, my: 2 }}>
                             <Box>
@@ -375,11 +421,21 @@ const MainRoom = () => {
                                         value={`http://localhost:3000/join-room/${currentShareRoom?.inviteCode}`}
                                         variant="outlined"
                                         size="small"
-                                        InputProps={{ readOnly: true }}
+                                        InputProps={{
+                                            readOnly: true,
+                                            sx: { borderRadius: '10px' }
+                                        }}
                                     />
                                     <Button
                                         variant="contained"
                                         onClick={() => handleCopy(`http://localhost:3000/join-room/${currentShareRoom?.inviteCode}`)}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                            }
+                                        }}
                                     >
                                         Copy Link
                                     </Button>
@@ -396,11 +452,21 @@ const MainRoom = () => {
                                         value={currentShareRoom?.inviteCode}
                                         variant="outlined"
                                         size="small"
-                                        InputProps={{ readOnly: true }}
+                                        InputProps={{
+                                            readOnly: true,
+                                            sx: { borderRadius: '10px' }
+                                        }}
                                     />
                                     <Button
                                         variant="contained"
                                         onClick={() => handleCopy(currentShareRoom?.inviteCode)}
+                                        sx={{
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                            }
+                                        }}
                                     >
                                         Copy Code
                                     </Button>
@@ -408,11 +474,18 @@ const MainRoom = () => {
                             </Box>
                         </Box>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setShareDialogOpen(false)}>Close</Button>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button
+                            onClick={() => setShareDialogOpen(false)}
+                            sx={{
+                                borderRadius: '10px',
+                                color: '#3B1E54'
+                            }}
+                        >
+                            Close
+                        </Button>
                     </DialogActions>
                 </Dialog>
-
 
                 <Drawer
                     anchor="left"
@@ -439,95 +512,204 @@ const MainRoom = () => {
                 <Typography
                     variant="h5"
                     gutterBottom
-                    sx={{ mt: 4, mb: 3, fontWeight: 'bold' }}
+                    sx={{
+                        mt: 4,
+                        mb: 3,
+                        fontWeight: 700,
+                        color: '#3B1E54',
+                        position: 'relative',
+                        display: 'inline-block',
+                        '&:after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: -8,
+                            left: 0,
+                            width: '100%',
+                            height: '3px',
+                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                            borderRadius: '2px'
+                        }
+                    }}
                 >
                     Your Rooms
                 </Typography>
-                <Grid container spacing={3}>
-                    {rooms.map((room) => {
-                        // Add debug logs
-                        console.log('Current user ID:', userData?.id)
-                        console.log('Room members:', room.members)
-                        console.log('Admin check:', room.members.find(m => {
-                            console.log('Comparing:', {
-                                'Member user ID': m.user,
-                                'Current user ID': userData?.id,
-                                'Member role': m.role
-                            })
-                            return m.user._id === userData?.id && m.role === 'admin'
-                        }))
 
-                        return (
-                            <Grid item xs={12} key={room._id}>
-                                <Card elevation={3} sx={{
+                <Grid container spacing={3}>
+                    {rooms.map((room) => (
+                        <Grid item xs={12} key={room._id}>
+                            <Card
+                                elevation={0}
+                                sx={{
                                     display: 'flex',
-                                    bgcolor: room.members.find(m =>
+                                    background: room.members.find(m =>
                                         m.user._id === userData?.id &&
                                         m.role === 'admin'
-                                    ) ? '#e3f2fd' : 'white',
-                                    '&:hover': { transform: 'translateY(-4px)', transition: 'all 0.3s' }
+                                    ) ? 'linear-gradient(145deg, rgba(59, 30, 84, 0.08), rgba(94, 46, 135, 0.04))' : 'white',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(59, 30, 84, 0.1)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 8px 24px rgba(59, 30, 84, 0.12)'
+                                    }
+                                }}
+                            >
+                                <CardContent sx={{
+                                    flex: '1 1 auto',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    p: 3
                                 }}>
-                                    <CardContent sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Box>
-                                            <Typography variant="h6" color="primary">{room.name}</Typography>
-                                            <Typography color="text.secondary">{room.description}</Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Members: {room.members?.length || 0}
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                            <IconButton onClick={() => handleShareRoom(room)} color="primary">
-                                                <ShareIcon />
-                                            </IconButton>
+                                    <Box>
+                                        <Typography
+                                            variant="h6"
+                                            sx={{
+                                                color: '#3B1E54',
+                                                fontWeight: 600,
+                                                mb: 1
+                                            }}
+                                        >
+                                            {room.name}
+                                        </Typography>
+                                        <Typography
+                                            color="text.secondary"
+                                            sx={{ mb: 1 }}
+                                        >
+                                            {room.description}
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: 'rgba(59, 30, 84, 0.6)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1
+                                            }}
+                                        >
+                                            Members: {room.members?.length || 0}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        gap: 1,
+                                        alignItems: 'center'
+                                    }}>
+                                        <IconButton
+                                            onClick={() => handleShareRoom(room)}
+                                            sx={{
+                                                color: '#3B1E54',
+                                                '&:hover': {
+                                                    background: 'rgba(59, 30, 84, 0.08)'
+                                                }
+                                            }}
+                                        >
+                                            <ShareIcon />
+                                        </IconButton>
 
-                                            {room.members.find(m =>
-                                                m.user._id === userData?.id &&
-                                                m.role === 'admin'
-                                            ) && (
-                                                    <>
-                                                        <IconButton onClick={() => handleOpenEditModal(room)} color="warning">
-                                                            <EditIcon />
-                                                        </IconButton>
-                                                        <IconButton onClick={() => handleDeleteRoom(room)} color="error">
-                                                            <DeleteIcon />
-                                                        </IconButton>
-                                                        <IconButton
-                                                            onClick={() => {
-                                                                console.log('Navigating to settings for room:', room._id);
-                                                                navigate(`/room/${room._id}/settings`);
-                                                            }}
-                                                            color="primary"
-                                                        >
-                                                            <SettingsIcon />
-                                                        </IconButton>
+                                        {room.members.find(m =>
+                                            m.user._id === userData?.id &&
+                                            m.role === 'admin'
+                                        ) && (
+                                                <>
+                                                    <IconButton
+                                                        onClick={() => handleOpenEditModal(room)}
+                                                        sx={{
+                                                            color: '#5E2E87',
+                                                            '&:hover': {
+                                                                background: 'rgba(94, 46, 135, 0.08)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        onClick={() => handleDeleteRoom(room)}
+                                                        sx={{
+                                                            color: '#FF5252',
+                                                            '&:hover': {
+                                                                background: 'rgba(255, 82, 82, 0.08)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        onClick={() => navigate(`/room/${room._id}/settings`)}
+                                                        sx={{
+                                                            color: '#3B1E54',
+                                                            '&:hover': {
+                                                                background: 'rgba(59, 30, 84, 0.08)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SettingsIcon />
+                                                    </IconButton>
+                                                </>
+                                            )}
 
-                                                    </>
-                                                )}
-                                            {!room.members.find(m =>
-                                                m.user._id === userData?.id &&
-                                                m.role === 'admin'
-                                            ) && (
-                                                    <Button onClick={() => handleLeaveRoom(room._id)} color="secondary">
-                                                        Leave Room
-                                                    </Button>
-                                                )}
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={() => navigate(`/room/${room._id}`)}
-                                            >
-                                                Enter Room
-                                            </Button>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        )
-                    })}
+                                        {!room.members.find(m =>
+                                            m.user._id === userData?.id &&
+                                            m.role === 'admin'
+                                        ) && (
+                                                <Button
+                                                    onClick={() => handleLeaveRoom(room._id)}
+                                                    sx={{
+                                                        borderRadius: '8px',
+                                                        color: '#FF5252',
+                                                        '&:hover': {
+                                                            background: 'rgba(255, 82, 82, 0.08)'
+                                                        }
+                                                    }}
+                                                >
+                                                    Leave Room
+                                                </Button>
+                                            )}
+
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => navigate(`/room/${room._id}`)}
+                                            sx={{
+                                                borderRadius: '8px',
+                                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                                '&:hover': {
+                                                    background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                                }
+                                            }}
+                                        >
+                                            Enter Room
+                                        </Button>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))}
                 </Grid>
-                <Dialog open={openJoinModal} onClose={() => setOpenJoinModal(false)}>
-                    <DialogTitle>Join Room</DialogTitle>
-                    <DialogContent>
+
+                <Dialog
+                    open={openJoinModal}
+                    onClose={() => setOpenJoinModal(false)}
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '20px',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            width: '400px',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' }
+                            }
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{
+                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                        color: 'white',
+                        borderRadius: '20px 20px 0 0'
+                    }}>
+                        Join Room
+                    </DialogTitle>
+                    <DialogContent sx={{ mt: 2 }}>
                         <TextField
                             autoFocus
                             margin="dense"
@@ -535,13 +717,34 @@ const MainRoom = () => {
                             fullWidth
                             value={inviteCode}
                             onChange={(e) => setInviteCode(e.target.value)}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setOpenJoinModal(false)}>Cancel</Button>
+                    <DialogActions sx={{ p: 2, pt: 0 }}>
+                        <Button
+                            onClick={() => setOpenJoinModal(false)}
+                            sx={{
+                                borderRadius: '10px',
+                                color: '#3B1E54'
+                            }}
+                        >
+                            Cancel
+                        </Button>
                         <Button
                             onClick={() => debouncedJoinRoom(inviteCode)}
                             disabled={isJoining}
+                            variant="contained"
+                            sx={{
+                                borderRadius: '10px',
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                }
+                            }}
                         >
                             {isJoining ? 'Joining...' : 'Join'}
                         </Button>
@@ -552,9 +755,26 @@ const MainRoom = () => {
                     onClose={() => setOpenCreateModal(false)}
                     maxWidth="sm"
                     fullWidth
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '20px',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' }
+                            }
+                        }
+                    }}
                 >
-                    <DialogTitle>Create New Room</DialogTitle>
-                    <DialogContent>
+                    <DialogTitle sx={{
+                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                        color: 'white',
+                        borderRadius: '20px 20px 0 0'
+                    }}>
+                        Create New Room
+                    </DialogTitle>
+                    <DialogContent sx={{ mt: 2 }}>
                         <TextField
                             autoFocus
                             margin="dense"
@@ -563,6 +783,11 @@ const MainRoom = () => {
                             variant="outlined"
                             value={roomData.name}
                             onChange={(e) => setRoomData({ ...roomData, name: e.target.value })}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                         <TextField
                             margin="dense"
@@ -573,11 +798,34 @@ const MainRoom = () => {
                             variant="outlined"
                             value={roomData.description}
                             onChange={(e) => setRoomData({ ...roomData, description: e.target.value })}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-                        <Button onClick={handleCreateRoom} variant="contained">
+                    <DialogActions sx={{ p: 2, pt: 0 }}>
+                        <Button
+                            onClick={() => setOpenCreateModal(false)}
+                            sx={{
+                                borderRadius: '10px',
+                                color: '#3B1E54'
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleCreateRoom}
+                            variant="contained"
+                            sx={{
+                                borderRadius: '10px',
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                }
+                            }}
+                        >
                             Create
                         </Button>
                     </DialogActions>
@@ -586,27 +834,66 @@ const MainRoom = () => {
 
 
                 {/* Delete Room Modal */}
-                <Dialog open={deleteConfirmDialog} onClose={() => setDeleteConfirmDialog(false)}>
-                    <DialogTitle>Delete Room</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
+                <Dialog
+                    open={deleteConfirmDialog}
+                    onClose={() => setDeleteConfirmDialog(false)}
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '20px',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' }
+                            }
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{
+                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                        color: 'white',
+                        borderRadius: '20px 20px 0 0'
+                    }}>
+                        Delete Room
+                    </DialogTitle>
+                    <DialogContent sx={{ mt: 2 }}>
+                        <DialogContentText sx={{ mb: 2 }}>
                             This action cannot be undone. To confirm deletion, please type 'DELETE' in the field below.
                         </DialogContentText>
                         <TextField
                             autoFocus
-                            margin="dense"
-                            label="Type DELETE to confirm"
                             fullWidth
+                            label="Type DELETE to confirm"
                             value={deleteConfirmText}
                             onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setDeleteConfirmDialog(false)}>Cancel</Button>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button
+                            onClick={() => setDeleteConfirmDialog(false)}
+                            sx={{
+                                borderRadius: '10px',
+                                color: '#3B1E54'
+                            }}
+                        >
+                            Cancel
+                        </Button>
                         <Button
                             onClick={confirmDelete}
-                            color="error"
                             disabled={deleteConfirmText !== 'DELETE'}
+                            sx={{
+                                color: '#FFFFFF',
+                                borderRadius: '10px',
+                                background: deleteConfirmText === 'DELETE' ? 'linear-gradient(45deg, #FF5252, #FF1744)' : undefined,
+                                '&:hover': {
+                                    background: deleteConfirmText === 'DELETE' ? 'linear-gradient(45deg, #FF1744, #D50000)' : undefined
+                                }
+                            }}
                         >
                             Delete Room
                         </Button>
@@ -614,32 +901,78 @@ const MainRoom = () => {
                 </Dialog>
 
                 {/* Edit Room Modal */}
-                <Dialog open={Boolean(openEditModal)} onClose={handleCloseEditModal}>
-                    <DialogTitle>Edit Room</DialogTitle>
-                    <DialogContent>
+                <Dialog
+                    open={Boolean(openEditModal)}
+                    onClose={handleCloseEditModal}
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '20px',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' }
+                            }
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{
+                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                        color: 'white',
+                        borderRadius: '20px 20px 0 0'
+                    }}>
+                        Edit Room
+                    </DialogTitle>
+                    <DialogContent sx={{ mt: 2 }}>
                         <TextField
                             autoFocus
                             margin="dense"
                             label="Room Name"
-                            type="text"
                             fullWidth
                             value={editRoomData.name}
                             onChange={(e) => setEditRoomData({ ...editRoomData, name: e.target.value })}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                         <TextField
                             margin="dense"
                             label="Description"
-                            type="text"
                             fullWidth
                             multiline
                             rows={4}
                             value={editRoomData.description}
                             onChange={(e) => setEditRoomData({ ...editRoomData, description: e.target.value })}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseEditModal}>Cancel</Button>
-                        <Button onClick={handleSaveRoomChanges} color="primary">
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button
+                            onClick={handleCloseEditModal}
+                            sx={{
+                                borderRadius: '10px',
+                                color: '#3B1E54'
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveRoomChanges}
+                            variant="contained"
+                            sx={{
+                                borderRadius: '10px',
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                }
+                            }}
+                        >
                             Save Changes
                         </Button>
                     </DialogActions>

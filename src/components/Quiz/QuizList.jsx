@@ -46,9 +46,18 @@ const QuizList = () => {
         const token = localStorage.getItem('token');
         try {
             const response = await fetch('http://localhost:5000/api/quiz/all', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch quizzes');
+            }
+
             const data = await response.json();
+            console.log('Fetched quizzes:', data);
             setQuizzes(data);
         } catch (error) {
             console.error('Error:', error);
@@ -93,24 +102,29 @@ const QuizList = () => {
     const fetchAttempts = async () => {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch('http://localhost:5000/api/quiz/all-attempts', {
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await fetch('http://localhost:5000/api/quiz/attempts', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             const data = await response.json();
-            console.log('Raw attempts data:', data);
 
-            // Map attempts using the quizId from the attempt data
+            // Process attempts to store highest scores
             const attemptMap = {};
             data.forEach(attempt => {
-                attemptMap[attempt.quizId._id || attempt.quizId] = {
-                    score: attempt.score,
-                    timeSpent: attempt.timeSpent
-                };
+                const quizId = attempt.quizId._id;
+                if (!attemptMap[quizId] || attempt.score > attemptMap[quizId].score) {
+                    attemptMap[quizId] = {
+                        score: attempt.score,
+                        timeSpent: attempt.timeSpent
+                    };
+                }
             });
-            console.log('Quiz IDs in map:', Object.keys(attemptMap));
+
             setAttempts(attemptMap);
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error fetching attempts:', error);
         }
     };
 
@@ -118,145 +132,271 @@ const QuizList = () => {
 
 
 
+
+
+
     return (
-        <Box>
-            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Delete Quiz</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete this quiz? All attempts will also be deleted.
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+        <Box sx={{ bgcolor: '#F8F9FC', minHeight: '100vh' }}>
             <Navbar userData={userData} />
-            <Container maxWidth="lg" sx={{ mt: 4 }}>
-                <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-                    Available Quizzes
-                </Typography>
+            <Container maxWidth="lg">
+                <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: 700,
+                            color: '#3B1E54',
+                            mb: 4,
+                            position: 'relative',
+                            '&:after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -8,
+                                left: 0,
+                                width: '60px',
+                                height: '4px',
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                borderRadius: '2px'
+                            }
+                        }}
+                    >
+                        Available Quizzes
+                    </Typography>
 
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ bgcolor: 'primary.main' }}>
-                                <TableCell sx={{ color: 'white' }}>Quiz Name</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Room</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Course</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Source Note</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Details</TableCell>
-                                <TableCell sx={{ color: 'white' }}>View Results</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Total Attempts</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Score</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {quizzes.map((quiz) => (
-                                <TableRow
-                                    key={quiz._id}
-                                    sx={{ '&:hover': { bgcolor: 'action.hover' } }}
-                                >
-                                    <TableCell>
-                                        <Typography variant="body1">
-                                            {quiz.title}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <MeetingRoomIcon fontSize="small" />
-                                            {quiz.roomId?.name || 'General'}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <SchoolIcon fontSize="small" />
-                                            {quiz.courseId ? quiz.courseId.name : 'General'}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <MuiLink
-                                            component={Link}
-                                            to={`/notes/${quiz.noteId._id}`}
-                                            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            borderRadius: '20px',
+                            overflow: 'hidden',
+                            border: '1px solid rgba(59, 30, 84, 0.1)',
+                            background: 'white',
+                            boxShadow: '0 4px 20px rgba(59, 30, 84, 0.05)'
+                        }}
+                    >
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{
+                                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                    }}>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Quiz Name</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Room</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Course</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Source Note</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Details</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Results</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Attempts</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Score</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {quizzes.map((quiz) => (
+                                        <TableRow
+                                            key={quiz._id}
+                                            sx={{
+                                                transition: 'all 0.3s ease',
+                                                '&:hover': {
+                                                    bgcolor: 'rgba(59, 30, 84, 0.04)',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: '0 4px 12px rgba(59, 30, 84, 0.08)'
+                                                }
+                                            }}
                                         >
-                                            <NoteIcon fontSize="small" />
-                                            {quiz.noteId.title}
-                                        </MuiLink>
-                                    </TableCell>
+                                            <TableCell>
+                                                <Typography
+                                                    variant="subtitle1"
+                                                    sx={{
+                                                        fontWeight: 600,
+                                                        color: '#3B1E54'
+                                                    }}
+                                                >
+                                                    {quiz.title}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    color: '#5E2E87'
+                                                }}>
+                                                    <MeetingRoomIcon fontSize="small" />
+                                                    {quiz.roomId?.name || 'General'}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    color: '#5E2E87'
+                                                }}>
+                                                    <SchoolIcon fontSize="small" />
+                                                    {quiz.courseId?.name || 'General'}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                {quiz.noteId ? (
+                                                    <MuiLink
+                                                        component={Link}
+                                                        to={`/notes/${quiz.noteId._id}`}
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1,
+                                                            color: '#2196F3',
+                                                            textDecoration: 'none',
+                                                            '&:hover': {
+                                                                textDecoration: 'underline'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <NoteIcon fontSize="small" />
+                                                        {quiz.noteId.title}
+                                                    </MuiLink>
+                                                ) : (
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        No source note
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    icon={<QuizIcon />}
+                                                    label={`${quiz.questions.length} Questions`}
+                                                    sx={{
+                                                        bgcolor: 'rgba(59, 30, 84, 0.08)',
+                                                        color: '#3B1E54',
+                                                        '& .MuiChip-icon': {
+                                                            color: '#3B1E54'
+                                                        }
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            
+                                            <TableCell>
+                                                {attempts[quiz._id] ? (
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={() => navigate(`/quiz-results/${quiz._id}`)}
+                                                        startIcon={<AssignmentIcon />}
+                                                        sx={{
+                                                            borderColor: '#3B1E54',
+                                                            color: '#3B1E54',
+                                                            '&:hover': {
+                                                                borderColor: '#5E2E87',
+                                                                bgcolor: 'rgba(59, 30, 84, 0.04)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        View Results
+                                                    </Button>
+                                                ) : (
+                                                    <Chip
+                                                        label="No Attempts"
+                                                        variant="outlined"
+                                                        size="small"
+                                                        sx={{ opacity: 0.7 }}
+                                                    />
+                                                )}
+                                            </TableCell>
 
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <Chip
-                                                size="small"
-                                                label={`${quiz.questions.length} Questions`}
-                                                icon={<QuizIcon />}
-                                            />
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        {attempts[quiz._id] && (
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                onClick={() => navigate(`/quiz-results/${quiz._id}`)}
-                                                startIcon={<AssignmentIcon />}
-                                            >
-                                                View Answers
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={`${quiz.totalAttempts} ${quiz.totalAttempts === 1 ? 'Attempt' : 'Attempts'}`}
-                                            color="default"
-                                            size="small"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        {attempts && attempts[quiz._id] ? (
-                                            <Chip
-                                                label={`${attempts[quiz._id].score.toFixed(1)}%`}
-                                                color={attempts[quiz._id].score >= 70 ? 'success' : 'warning'}
-                                                sx={{ fontWeight: 'bold' }}
-                                            />
-                                        ) : (
-                                            <Chip
-                                                label="Not Attempted"
-                                                variant="outlined"
-                                                sx={{ opacity: 0.7 }}
-                                            />
-                                        )}
-                                    </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={`${quiz.totalAttempts} ${quiz.totalAttempts === 1 ? 'Attempt' : 'Attempts'}`}
+                                                    sx={{
+                                                        bgcolor: 'rgba(59, 30, 84, 0.08)',
+                                                        color: '#3B1E54'
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                {attempts[quiz._id] ? (
+                                                    <Chip
+                                                        label={`${attempts[quiz._id].score.toFixed(1)}%`}
+                                                        color={attempts[quiz._id].score >= 70 ? 'success' : 'warning'}
+                                                        sx={{ fontWeight: 600 }}
+                                                    />
+                                                ) : (
+                                                    <Chip
+                                                        label="Not Attempted"
+                                                        variant="outlined"
+                                                        sx={{ opacity: 0.7 }}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Button
+                                                        variant="contained"
+                                                        size="small"
+                                                        onClick={() => navigate(`/quiz/${quiz._id}`)}
+                                                        sx={{
+                                                            bgcolor: attempts[quiz._id] ? '#5E2E87' : '#3B1E54',
+                                                            '&:hover': {
+                                                                bgcolor: attempts[quiz._id] ? '#4B2E64' : '#5E2E87'
+                                                            }
+                                                        }}
+                                                    >
+                                                        {attempts[quiz._id] ? 'Retake' : 'Start'}
+                                                    </Button>
+                                                    <IconButton
+                                                        onClick={() => handleDeleteClick(quiz)}
+                                                        sx={{
+                                                            color: '#FF5252',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(255, 82, 82, 0.08)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
 
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                onClick={() => navigate(`/quiz/${quiz._id}`)}
-                                                color={attempts[quiz._id] ? "secondary" : "primary"}
-                                            >
-                                                {attempts[quiz._id] ? 'Retake' : 'Start'}
-                                            </Button>
-                                            <IconButton
-                                                color="error"
-                                                onClick={() => handleDeleteClick(quiz)}
-                                                size="small"
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                    {/* Delete Confirmation Dialog */}
+                    <Dialog
+                        open={deleteDialogOpen}
+                        onClose={() => setDeleteDialogOpen(false)}
+                        PaperProps={{
+                            sx: {
+                                borderRadius: '16px',
+                                boxShadow: '0 4px 20px rgba(59, 30, 84, 0.15)'
+                            }
+                        }}
+                    >
+                        <DialogTitle sx={{ color: '#3B1E54' }}>Delete Quiz</DialogTitle>
+                        <DialogContent>
+                            Are you sure you want to delete this quiz? All attempts will also be deleted.
+                        </DialogContent>
+                        <DialogActions sx={{ p: 2 }}>
+                            <Button
+                                onClick={() => setDeleteDialogOpen(false)}
+                                sx={{ color: '#3B1E54' }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleDeleteConfirm}
+                                color="error"
+                                variant="contained"
+                                sx={{ borderRadius: '8px' }}
+                            >
+                                Delete
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                </Box>
             </Container>
         </Box>
+
     );
 };
 

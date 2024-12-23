@@ -3,21 +3,20 @@ import {
     Box,
     Typography,
     Breadcrumbs,
-    Card,
-    CardContent,
+    Container,
     Grid,
-    IconButton,
-    Button
+    Button,
+    Paper,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    alpha
 } from '@mui/material';
 import { jwtDecode } from 'jwt-decode';
-import FolderIcon from '@mui/icons-material/Folder';
-import DescriptionIcon from '@mui/icons-material/Description';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
+import FolderIcon from '@mui/icons-material/Folder';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
 import NoteIcon from '@mui/icons-material/Note';
 import SummarizeIcon from '@mui/icons-material/Summarize';
@@ -25,233 +24,237 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+const courseFolders = [
+    { 
+        id: 'digital-notes', 
+        name: 'Digital Notes', 
+        icon: <NoteIcon sx={{ color: '#2196F3' }} />,
+        path: 'notes'
+    },
+    { 
+        id: 'summaries', 
+        name: 'Summarized Notes', 
+        icon: <SummarizeIcon sx={{ color: '#4CAF50' }} />,
+        path: 'summaries'
+    },
+    { 
+        id: 'assignments', 
+        name: 'Assignments', 
+        icon: <AssignmentIcon sx={{ color: '#FF9800' }} />,
+        path: 'assignments'
+    }
+];
+
 const FileSystem = () => {
+    const { roomId, courseId } = useParams();
+    const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
     const [rooms, setRooms] = useState([]);
-    const [currentView, setCurrentView] = useState('rooms');
-    const [selectedRoom, setSelectedRoom] = useState(null);
     const [courses, setCourses] = useState([]);
-    const { roomId, courseId } = useParams();
-    const courseFolders = [
-        { id: 'digital-notes', name: 'Digital Notes', icon: <NoteIcon sx={{ color: '#2196F3' }} /> },
-        { id: 'summaries', name: 'Summarized Notes', icon: <SummarizeIcon sx={{ color: '#4CAF50' }} /> },
-        { id: 'assignments', name: 'Assignments', icon: <AssignmentIcon sx={{ color: '#FF9800' }} /> },
-        { id: 'resources', name: 'Resources', icon: <FolderSpecialIcon sx={{ color: '#9C27B0' }} /> }
-    ];
-
-    const navigate = useNavigate();
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [currentView, setCurrentView] = useState('rooms');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            fetchUserData();
-            fetchUserRooms();
+            const decoded = jwtDecode(token);
+            fetchUserData(decoded.email);
+            fetchRooms();
         }
     }, []);
 
     useEffect(() => {
         if (roomId) {
-            fetchRoomCourses();
+            fetchCourses(roomId);
+            setCurrentView('courses');
         }
     }, [roomId]);
 
-    const handleBackNavigation = () => {
-        if (currentView === 'courses') {
-            setCurrentView('rooms');
-            navigate('/files');
+    useEffect(() => {
+        if (courseId) {
+            setCurrentView('folders');
         }
-    };
+    }, [courseId]);
 
-
-    const fetchUserData = async () => {
-        const token = localStorage.getItem('token');
+    const fetchUserData = async (email) => {
         try {
-            const decoded = jwtDecode(token);
-            const response = await fetch(`http://localhost:5000/api/user/profile/${decoded.email}`);
+            const response = await fetch(`http://localhost:5000/api/user/profile/${email}`);
             const data = await response.json();
             setUserData(data);
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error fetching user data:', error);
         }
     };
 
-    const fetchUserRooms = async () => {
-        const token = localStorage.getItem('token');
+    const fetchRooms = async () => {
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('http://localhost:5000/api/rooms/user-rooms', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
             setRooms(data);
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error fetching rooms:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const fetchRoomCourses = async () => {
-        const token = localStorage.getItem('token');
+    const fetchCourses = async (roomId) => {
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`http://localhost:5000/api/rooms/${roomId}/courses`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
             setCourses(data);
-            setCurrentView('courses');
+            const room = rooms.find(r => r._id === roomId);
+            setSelectedRoom(room);
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error fetching courses:', error);
+        }
+    };
+
+    const handleBackNavigation = () => {
+        if (currentView === 'folders') {
+            navigate(`/files/${roomId}`);
+            setCurrentView('courses');
+        } else if (currentView === 'courses') {
+            navigate('/files');
+            setCurrentView('rooms');
+        }
+    };
+
+    const handleFolderClick = (folder) => {
+        if (folder.path) {
+            navigate(`/files/${roomId}/${courseId}/${folder.path}`);
         }
     };
 
     const renderRooms = () => (
-        <Box sx={{ mt: 4 }}>
-            <Box sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: 2,
-                overflowX: 'auto',
-                pb: 2
-            }}>
-                {rooms.map(room => (
-                    <Card
-                        key={room._id}
-                        sx={{
-                            minWidth: '200px',
-                            cursor: 'pointer',
-                            textAlign: 'center',
-                            padding: '20px',
-                            flexShrink: 0,
-                            '&:hover': {
-                                transform: 'translateY(-4px)',
-                                transition: 'all 0.3s',
-                                bgcolor: '#f5f5f5'
-                            }
-                        }}
+        <Grid container spacing={3}>
+            {rooms.map(room => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={room._id}>
+                    <Paper
+                        elevation={0}
                         onClick={() => {
                             setSelectedRoom(room);
                             navigate(`/files/${room._id}`);
                         }}
+                        sx={{
+                            p: 3,
+                            cursor: 'pointer',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(59, 30, 84, 0.1)',
+                            background: 'linear-gradient(145deg, #ffffff, #f9f7fc)',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'translateY(-4px)',
+                                boxShadow: '0 8px 24px rgba(59, 30, 84, 0.12)'
+                            }
+                        }}
                     >
-                        <FolderIcon sx={{
-                            fontSize: 60,
-                            color: '#1976d2',
-                            mb: 1
-                        }} />
-                        <Typography
-                            variant="h6"
-                            sx={{
-                                fontWeight: 500,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                            }}
-                        >
-                            {room.name}
-                        </Typography>
-                    </Card>
-                ))}
-            </Box>
-        </Box>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center',
+                            gap: 2
+                        }}>
+                            <FolderIcon sx={{
+                                fontSize: 48,
+                                color: '#3B1E54'
+                            }} />
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    fontWeight: 600,
+                                    color: '#3B1E54',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                {room.name}
+                            </Typography>
+                        </Box>
+                    </Paper>
+                </Grid>
+            ))}
+        </Grid>
     );
 
     const renderCourses = () => (
-        <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            mt: 4
-        }}>
-            <Typography variant="h5" gutterBottom>
-                Courses in {selectedRoom?.name}
-            </Typography>
-            <List sx={{ width: '100%', maxWidth: 600 }}>
-                {courses.map((course) => (
-                    <ListItem
-                        key={course._id}
-                        sx={{
-                            mb: 2,
-                            bgcolor: 'background.paper',
-                            borderRadius: 1,
-                            '&:hover': {
-                                bgcolor: '#f5f5f5',
-                                transform: 'translateX(10px)',
-                                transition: 'all 0.3s'
-                            }
-                        }}
-                        button
-                        onClick={() => {
-                            setCurrentView('folders');
-                            navigate(`/files/${roomId}/${course._id}`);
-                        }}
-                    >
-                        <ListItemIcon>
-                            <FolderSpecialIcon sx={{ color: '#1976d2', fontSize: 30 }} />
-                        </ListItemIcon>
-                        <ListItemText
-                            primary={
-                                <Typography variant="h6">
-                                    {course.name}
-                                </Typography>
-                            }
-                        />
-                        <ChevronRightIcon />
-                    </ListItem>
-                ))}
-            </List>
-        </Box>
+        <List sx={{ width: '100%', maxWidth: 800, mx: 'auto' }}>
+            {courses.map((course) => (
+                <ListItem
+                    key={course._id}
+                    button
+                    onClick={() => {
+                        setCurrentView('folders');
+                        navigate(`/files/${roomId}/${course._id}`);
+                    }}
+                    sx={{
+                        mb: 2,
+                        borderRadius: '12px',
+                        border: '1px solid rgba(59, 30, 84, 0.1)',
+                        background: 'linear-gradient(145deg, #ffffff, #f9f7fc)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            transform: 'translateX(8px)',
+                            boxShadow: '0 4px 20px rgba(59, 30, 84, 0.08)'
+                        }
+                    }}
+                >
+                    <ListItemIcon>
+                        <FolderSpecialIcon sx={{ color: '#3B1E54', fontSize: 32 }} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={
+                            <Typography variant="h6" sx={{ color: '#3B1E54', fontWeight: 600 }}>
+                                {course.name}
+                            </Typography>
+                        }
+                    />
+                    <ChevronRightIcon sx={{ color: '#3B1E54' }} />
+                </ListItem>
+            ))}
+        </List>
     );
 
     const renderCourseFolders = () => (
-        <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            mt: 4
-        }}>
-            <List sx={{ width: '100%', maxWidth: 600 }}>
-                {courseFolders.map((folder) => (
-                    <ListItem
-                        key={folder.id}
-                        sx={{
-                            mb: 2,
-                            bgcolor: 'background.paper',
-                            borderRadius: 1,
-                            '&:hover': {
-                                bgcolor: '#f5f5f5',
-                                transform: 'translateX(10px)',
-                                transition: 'all 0.3s'
-                            }
-                        }}
-                        button
-                        onClick={() => {
-                            if (folder.id === 'digital-notes') {
-                                navigate(`/files/${roomId}/${courseId}/notes`);
-                            }
-                            else if (folder.id === 'summaries') {
-                                navigate(`/files/${roomId}/${courseId}/summaries`);
-                            }
-                        }}
-                    >
-                        <ListItemIcon>
-                            {folder.icon}
-                        </ListItemIcon>
-                        <ListItemText
-                            primary={
-                                <Typography variant="h6">
-                                    {folder.name}
-                                </Typography>
-                            }
-                        />
-                        <ChevronRightIcon />
-                    </ListItem>
-                ))}
-            </List>
-        </Box>
+        <List sx={{ width: '100%', maxWidth: 800, mx: 'auto' }}>
+            {courseFolders.map((folder) => (
+                <ListItem
+                    key={folder.id}
+                    button
+                    onClick={() => handleFolderClick(folder)}
+                    sx={{
+                        mb: 2,
+                        borderRadius: '12px',
+                        border: '1px solid rgba(59, 30, 84, 0.1)',
+                        background: 'linear-gradient(145deg, #ffffff, #f9f7fc)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            transform: 'translateX(8px)',
+                            boxShadow: '0 4px 20px rgba(59, 30, 84, 0.08)'
+                        }
+                    }}
+                >
+                    <ListItemIcon>
+                        {folder.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={
+                            <Typography variant="h6" sx={{ color: '#3B1E54', fontWeight: 600 }}>
+                                {folder.name}
+                            </Typography>
+                        }
+                    />
+                    <ChevronRightIcon sx={{ color: '#3B1E54' }} />
+                </ListItem>
+            ))}
+        </List>
     );
-
 
     const renderContent = () => {
         switch (currentView) {
@@ -267,62 +270,105 @@ const FileSystem = () => {
     };
 
     return (
-
-        <Box>
-            <Navbar 
-                userData={userData}  />
-            <Box sx={{ p: 3 }}>
-                {currentView === 'courses' && (
-                    <Button
-                        startIcon={<ArrowBackIcon />}
-                        onClick={handleBackNavigation}
-                        variant="outlined"
-                        sx={{ mb: 3 }}
-                    >
-                        Back to Rooms
-                    </Button>
-                )}
-            </Box>
-            <Box sx={{ p: 3 }}>
-                <Breadcrumbs separator="›" sx={{ mb: 3 }}>
-                    <Box
-                        onClick={() => {
-                            navigate('/files');
-                            setCurrentView('rooms');
-                        }}
+        <Box sx={{ bgcolor: '#F8F9FC', minHeight: '100vh' }}>
+            <Navbar userData={userData} />
+            <Container maxWidth="lg">
+                <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+                    <Typography
+                        variant="h4"
                         sx={{
-                            cursor: 'pointer',
-                            color: 'primary.main',
-                            fontWeight: 500,
-                            '&:hover': { textDecoration: 'underline' }
+                            fontWeight: 700,
+                            color: '#3B1E54',
+                            mb: 4,
+                            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                            position: 'relative',
+                            '&:after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -8,
+                                left: 0,
+                                width: '60px',
+                                height: '4px',
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                borderRadius: '2px'
+                            }
                         }}
                     >
                         My Files
-                    </Box>
-                    {currentView === 'courses' && selectedRoom && (
-                        <Box
-                            sx={{
-                                color: 'text.primary',
-                                fontWeight: 500
-                            }}
-                        >
-                            {selectedRoom.name}
-                        </Box>
-                    )}
-                    {currentView === 'folders' && (
-                        <Box
-                            sx={{
-                                color: 'text.primary',
-                                fontWeight: 500
-                            }}
-                        >
-                            Course Folders
-                        </Box>
-                    )}
-                </Breadcrumbs>
+                    </Typography>
 
-                {renderContent()}
-            </Box>
+                    {currentView !== 'rooms' && (
+                        <Button
+                            startIcon={<ArrowBackIcon />}
+                            onClick={handleBackNavigation}
+                            sx={{
+                                mb: 3,
+                                borderRadius: '12px',
+                                color: '#3B1E54',
+                                '&:hover': {
+                                    background: 'rgba(59, 30, 84, 0.04)'
+                                }
+                            }}
+                        >
+                            Back
+                        </Button>
+                    )}
+
+                    <Breadcrumbs 
+                        separator="›" 
+                        sx={{ 
+                            mb: 4,
+                            '& .MuiBreadcrumbs-separator': {
+                                color: '#3B1E54'
+                            }
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                cursor: 'pointer',
+                                color: '#3B1E54',
+                                fontWeight: currentView === 'rooms' ? 600 : 400,
+                                '&:hover': { textDecoration: 'underline' }
+                            }}
+                            onClick={() => {
+                                navigate('/files');
+                                setCurrentView('rooms');
+                            }}
+                        >
+                            Files
+                        </Typography>
+                        
+                        {selectedRoom && (
+                            <Typography
+                                sx={{
+                                    cursor: currentView === 'folders' ? 'pointer' : 'default',
+                                    color: '#3B1E54',
+                                    fontWeight: currentView === 'courses' ? 600 : 400,
+                                    '&:hover': currentView === 'folders' ? { 
+                                        textDecoration: 'underline' 
+                                    } : {}
+                                }}
+                                onClick={() => {
+                                    if (currentView === 'folders') {
+                                        navigate(`/files/${roomId}`);
+                                        setCurrentView('courses');
+                                    }
+                                }}
+                            >
+                                {selectedRoom.name}
+                            </Typography>
+                        )}
+                        
+                        {currentView === 'folders' && (
+                            <Typography sx={{ color: '#3B1E54', fontWeight: 600 }}>
+                                Course Folders
+                            </Typography>
+                        )}
+                    </Breadcrumbs>
+
+                    {renderContent()}
+                </Box>
+            </Container>
         </Box>
     );
 };

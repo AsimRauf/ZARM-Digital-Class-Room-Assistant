@@ -20,83 +20,90 @@ import QuizGenerator from './components/QuizGenerator/QuizGenerator';
 import QuizList from './components/Quiz/QuizList';
 import TakeQuiz from './components/Quiz/TakeQuiz';
 import QuizResults from './components/Quiz/QuizResults';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme';
+import { CssBaseline } from '@mui/material';
+
 
 
 
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={
-                    <PublicRoute><LoginForm /></PublicRoute>
-                } />
-                <Route path="/login" element={
-                    <PublicRoute><LoginForm /></PublicRoute>
-                } />
-                <Route path="/register" element={
-                    <PublicRoute><RegisterForm /></PublicRoute>
-                } />
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Router>
+                <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={
+                        <PublicRoute><LoginForm /></PublicRoute>
+                    } />
+                    <Route path="/login" element={
+                        <PublicRoute><LoginForm /></PublicRoute>
+                    } />
+                    <Route path="/register" element={
+                        <PublicRoute><RegisterForm /></PublicRoute>
+                    } />
 
 
-                {/* Protected Routes */}
-                <Route path="/quiz-results/:quizId" element={
-                    <ProtectedRoute><QuizResults /></ProtectedRoute>
-                } />
-                <Route path="/notes/:noteId" element={
-                    <ProtectedRoute><ViewNote /></ProtectedRoute>
-                } />
-                <Route path="/quiz/:quizId" element={
-                    <ProtectedRoute><TakeQuiz /></ProtectedRoute>
-                } />
-                <Route path="/quizzes" element={
-                    <ProtectedRoute><QuizList /></ProtectedRoute>
-                } />
-                <Route path="/quiz-generator" element={
-                    <ProtectedRoute><QuizGenerator /></ProtectedRoute>
-                } />
-                <Route path="/video-summarizer" element={
-                    <ProtectedRoute><VideoSummarizer /></ProtectedRoute>
-                } />
-                <Route path="/room/:roomId/course/:courseId/chat" element={
-                    <ProtectedRoute><CourseChat /></ProtectedRoute>
-                } />
-                <Route path="/summaries/:roomId/:courseId/:contentId" element={
-                    <ProtectedRoute><ViewSummarizedNote /></ProtectedRoute>
-                } />
-                <Route path="/files/:roomId/:courseId/notes" element={
-                    <ProtectedRoute><NotesDisplay /></ProtectedRoute>
-                } />
-                <Route path="/files" element={
-                    <ProtectedRoute><FileSystem /></ProtectedRoute>
-                } />
-                <Route path="/files/:roomId" element={
-                    <ProtectedRoute><FileSystem /></ProtectedRoute>
-                } />
-                <Route path="/files/:roomId/:courseId" element={
-                    <ProtectedRoute><FileSystem /></ProtectedRoute>
-                } />
-                <Route path="/files/:roomId/:courseId/summaries" element={
-                    <ProtectedRoute><SummarizedNotes /></ProtectedRoute>
-                } />
-                <Route path="/room/:roomId/settings" element={
-                    <ProtectedRoute><RoomSettings /></ProtectedRoute>
-                } />
-                <Route path="/join-room/:inviteCode" element={
-                    <ProtectedRoute><JoinRoom /></ProtectedRoute>
-                } />
-                <Route path="/room/:roomId" element={
-                    <ProtectedRoute><RoomInterior /></ProtectedRoute>
-                } />
-                <Route path="/mainroom" element={
-                    <ProtectedRoute><MainRoom /></ProtectedRoute>
-                } />
-                <Route path="/notes-digitizer" element={
-                    <ProtectedRoute><NotesDigitizer /></ProtectedRoute>
-                } />
-            </Routes>
-        </Router>
+                    {/* Protected Routes */}
+                    <Route path="/quiz-results/:quizId" element={
+                        <ProtectedRoute><QuizResults /></ProtectedRoute>
+                    } />
+                    <Route path="/notes/:noteId" element={
+                        <ProtectedRoute><ViewNote /></ProtectedRoute>
+                    } />
+                    <Route path="/quiz/:quizId" element={
+                        <ProtectedRoute><TakeQuiz /></ProtectedRoute>
+                    } />
+                    <Route path="/quizzes" element={
+                        <ProtectedRoute><QuizList /></ProtectedRoute>
+                    } />
+                    <Route path="/quiz-generator" element={
+                        <ProtectedRoute><QuizGenerator /></ProtectedRoute>
+                    } />
+                    <Route path="/video-summarizer" element={
+                        <ProtectedRoute><VideoSummarizer /></ProtectedRoute>
+                    } />
+                    <Route path="/room/:roomId/course/:courseId/chat" element={
+                        <ProtectedRoute><CourseChat /></ProtectedRoute>
+                    } />
+                    <Route path="/summaries/:roomId/:courseId/:contentId" element={
+                        <ProtectedRoute><ViewSummarizedNote /></ProtectedRoute>
+                    } />
+                    <Route path="/files/:roomId/:courseId/notes" element={
+                        <ProtectedRoute><NotesDisplay /></ProtectedRoute>
+                    } />
+                    <Route path="/files" element={
+                        <ProtectedRoute><FileSystem /></ProtectedRoute>
+                    } />
+                    <Route path="/files/:roomId" element={
+                        <ProtectedRoute><FileSystem /></ProtectedRoute>
+                    } />
+                    <Route path="/files/:roomId/:courseId" element={
+                        <ProtectedRoute><FileSystem /></ProtectedRoute>
+                    } />
+                    <Route path="/files/:roomId/:courseId/summaries" element={
+                        <ProtectedRoute><SummarizedNotes /></ProtectedRoute>
+                    } />
+                    <Route path="/room/:roomId/settings" element={
+                        <ProtectedRoute><RoomSettings /></ProtectedRoute>
+                    } />
+                    <Route path="/join-room/:inviteCode" element={
+                        <ProtectedRoute><JoinRoom /></ProtectedRoute>
+                    } />
+                    <Route path="/room/:roomId" element={
+                        <ProtectedRoute><RoomInterior /></ProtectedRoute>
+                    } />
+                    <Route path="/mainroom" element={
+                        <ProtectedRoute><MainRoom /></ProtectedRoute>
+                    } />
+                    <Route path="/notes-digitizer" element={
+                        <ProtectedRoute><NotesDigitizer /></ProtectedRoute>
+                    } />
+                </Routes>
+            </Router>
+        </ThemeProvider>
     );
 }
 

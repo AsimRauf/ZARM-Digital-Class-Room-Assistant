@@ -126,32 +126,57 @@ const RoomInterior = () => {
         <Box>
             <Navbar userData={userData} />
             <Box sx={{ p: 4 }}>
-                <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Typography variant="h4" gutterBottom>
+                <Box sx={{ 
+                    textAlign: 'center', 
+                    mb: 6,
+                    background: 'linear-gradient(145deg, rgba(59, 30, 84, 0.04), rgba(94, 46, 135, 0.02))',
+                    borderRadius: '24px',
+                    padding: '40px 20px',
+                }}>
+                    <Typography variant="h4" gutterBottom sx={{
+                        color: '#3B1E54',
+                        fontWeight: 700,
+                        mb: 3
+                    }}>
                         {room?.name}
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: 2 
+                    }}>
                         <Chip
                             label={`Role: ${userRole?.charAt(0).toUpperCase() + userRole?.slice(1)}`}
-                            color="primary"
                             sx={{
                                 fontSize: '1rem',
                                 padding: '20px 15px',
-                                fontWeight: 500
+                                fontWeight: 500,
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                color: 'white',
+                                borderRadius: '12px'
                             }}
                         />
-
+    
                         {isAdmin && (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
                                 onClick={() => setOpenCreateDialog(true)}
                                 sx={{
-                                    padding: '10px 24px',
+                                    padding: '12px 28px',
                                     fontSize: '1rem',
                                     fontWeight: 500,
                                     textTransform: 'none',
-                                    boxShadow: 2
+                                    borderRadius: '12px',
+                                    background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                    boxShadow: '0 4px 15px rgba(59, 30, 84, 0.25)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 8px 20px rgba(59, 30, 84, 0.3)',
+                                        background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                    }
                                 }}
                             >
                                 Create New Course
@@ -159,24 +184,50 @@ const RoomInterior = () => {
                         )}
                     </Box>
                 </Box>
-
+    
                 <Grid container spacing={3}>
                     {Array.isArray(courses) && courses.map((course) => (
                         <Grid item xs={12} md={6} lg={4} key={course?._id}>
-                            <Card elevation={3}>
-                                <CardContent>
-                                    <Typography variant="h6">
+                            <Card elevation={0} sx={{
+                                borderRadius: '16px',
+                                border: '1px solid rgba(59, 30, 84, 0.1)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-4px)',
+                                    boxShadow: '0 8px 24px rgba(59, 30, 84, 0.12)'
+                                }
+                            }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Typography variant="h6" sx={{
+                                        color: '#3B1E54',
+                                        fontWeight: 600,
+                                        mb: 1
+                                    }}>
                                         {course?.name}
                                     </Typography>
-                                    <Typography color="textSecondary">
+                                    <Typography sx={{ 
+                                        color: 'rgba(59, 30, 84, 0.6)',
+                                        mb: 2
+                                    }}>
                                         {course?.description}
                                     </Typography>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center',
+                                        mt: 2 
+                                    }}>
                                         <Button
                                             variant="contained"
-                                            color="primary"
                                             onClick={() => handleCourseClick(course._id)}
                                             startIcon={<ChatIcon />}
+                                            sx={{
+                                                borderRadius: '10px',
+                                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                                '&:hover': {
+                                                    background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                                }
+                                            }}
                                         >
                                             Open Chat
                                         </Button>
@@ -184,6 +235,12 @@ const RoomInterior = () => {
                                             <IconButton
                                                 size="small"
                                                 onClick={() => handleCourseSettings(course._id)}
+                                                sx={{
+                                                    color: '#3B1E54',
+                                                    '&:hover': {
+                                                        background: 'rgba(59, 30, 84, 0.08)'
+                                                    }
+                                                }}
                                             >
                                                 <SettingsIcon />
                                             </IconButton>
@@ -194,15 +251,32 @@ const RoomInterior = () => {
                         </Grid>
                     ))}
                 </Grid>
-
+    
                 <Dialog
                     open={openCreateDialog}
                     onClose={() => setOpenCreateDialog(false)}
                     maxWidth="sm"
                     fullWidth
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '20px',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' }
+                            }
+                        }
+                    }}
                 >
-                    <DialogTitle>Create New Course</DialogTitle>
-                    <DialogContent>
+                    <DialogTitle sx={{ 
+                        background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                        color: 'white',
+                        borderRadius: '20px 20px 0 0'
+                    }}>
+                        Create New Course
+                    </DialogTitle>
+                    <DialogContent sx={{ mt: 2 }}>
                         <TextField
                             autoFocus
                             margin="dense"
@@ -210,6 +284,11 @@ const RoomInterior = () => {
                             fullWidth
                             value={courseData.name}
                             onChange={(e) => setCourseData({ ...courseData, name: e.target.value })}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                         <TextField
                             margin="dense"
@@ -219,32 +298,67 @@ const RoomInterior = () => {
                             rows={4}
                             value={courseData.description}
                             onChange={(e) => setCourseData({ ...courseData, description: e.target.value })}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px'
+                                }
+                            }}
                         />
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
-                        <Button onClick={handleCreateCourse} variant="contained">
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button 
+                            onClick={() => setOpenCreateDialog(false)}
+                            sx={{ 
+                                borderRadius: '10px',
+                                color: '#3B1E54'
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleCreateCourse} 
+                            variant="contained"
+                            sx={{
+                                borderRadius: '10px',
+                                background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #4B2E64, #6E3E97)'
+                                }
+                            }}
+                        >
                             Create
                         </Button>
                     </DialogActions>
                 </Dialog>
-
+    
                 {selectedCourse && (
                     <Dialog
                         open={Boolean(selectedCourse)}
                         onClose={() => setSelectedCourse(null)}
                         maxWidth="md"
                         fullWidth
+                        PaperProps={{
+                            sx: {
+                                borderRadius: '20px',
+                                boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)'
+                            }
+                        }}
                     >
-                        <DialogTitle>{selectedCourse.name} - Chat</DialogTitle>
+                        <DialogTitle sx={{ 
+                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                            color: 'white',
+                            borderRadius: '20px 20px 0 0'
+                        }}>
+                            {selectedCourse.name} - Chat
+                        </DialogTitle>
                         <DialogContent>
-
                         </DialogContent>
                     </Dialog>
                 )}
             </Box>
         </Box>
     );
+    
 };
 
-export default RoomInterior;
+export default RoomInterior

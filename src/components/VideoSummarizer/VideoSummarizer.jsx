@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import Navbar from '../Navbar';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import AudiotrackIcon from '@mui/icons-material/Audiotrack';
+import SummarizeIcon from '@mui/icons-material/Summarize';
+import DoneIcon from '@mui/icons-material/Done';
 import { jwtDecode } from 'jwt-decode';
 import io from 'socket.io-client';
 import ReactPlayer from 'react-player';
@@ -280,33 +284,62 @@ const VideoSummarizer = () => {
             <Navbar userData={userData} />
             <Container maxWidth="lg">
                 <Box sx={{
-                    p: 4,
+                    mt: { xs: 6, md: 4 },
+                    p: { xs: 2, md: 4 },
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center'
                 }}>
                     <Typography variant="h4" sx={{
-                        mb: 3,
-                        fontWeight: 600,
+                        mb: 4,
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
                         textAlign: 'center',
-                        width: '100%'
+                        width: '100%',
+                        color: '#3B1E54',
+                        position: 'relative',
+                        '&:after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: -8,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: '60px',
+                            height: '4px',
+                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                            borderRadius: '2px'
+                        }
                     }}>
                         AI-Powered Video Intelligence
                     </Typography>
 
                     <Paper elevation={0} sx={{
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 2,
-                        p: 3,
+                        border: '1px solid rgba(59, 30, 84, 0.1)',
+                        borderRadius: '20px',
+                        p: 4,
                         mb: 4,
-                        width: '100%'
+                        width: '100%',
+                        background: 'white',
+                        boxShadow: '0 4px 20px rgba(59, 30, 84, 0.05)'
                     }}>
+
                         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                             <Button
                                 variant={videoSource === 'file' ? 'contained' : 'outlined'}
                                 onClick={() => setVideoSource('file')}
                                 startIcon={<CloudUploadIcon />}
-                                sx={{ flex: 1, height: 40 }}
+                                sx={{
+                                    flex: 1,
+                                    height: 48,
+                                    borderRadius: '12px',
+                                    bgcolor: videoSource === 'file' ? '#3B1E54' : 'transparent',
+                                    borderColor: '#3B1E54',
+                                    color: videoSource === 'file' ? 'white' : '#3B1E54',
+                                    '&:hover': {
+                                        bgcolor: videoSource === 'file' ? '#4B2E64' : 'rgba(59, 30, 84, 0.04)',
+                                        borderColor: '#3B1E54'
+                                    }
+                                }}
                             >
                                 Local Video
                             </Button>
@@ -316,7 +349,8 @@ const VideoSummarizer = () => {
                                 startIcon={<YouTubeIcon />}
                                 sx={{
                                     flex: 1,
-                                    height: 40,
+                                    height: 48,
+                                    borderRadius: '12px',
                                     bgcolor: videoSource === 'youtube' ? '#FF0000' : 'transparent',
                                     color: videoSource === 'youtube' ? 'white' : '#FF0000',
                                     borderColor: '#FF0000',
@@ -330,15 +364,34 @@ const VideoSummarizer = () => {
                             </Button>
                         </Box>
 
+
                         {videoSource === 'youtube' && (
-                            <Alert severity="info" sx={{ mb: 2 }}>
+                            <Alert
+                                severity="info"
+                                sx={{
+                                    mb: 2,
+                                    borderRadius: '12px',
+                                    '& .MuiAlert-icon': {
+                                        color: '#3B1E54'
+                                    }
+                                }}
+                            >
                                 ⚡ Processing time depends on video length and internet speed (3-5 mins for 10-min video)
                             </Alert>
                         )}
 
                         <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center', justifyContent: 'center' }}>
                             {videoSource === 'file' && (
-                                <Paper sx={{ p: 2, flex: 1, maxWidth: 400, }}>
+                                <Paper
+                                    sx={{
+                                        p: 3,
+                                        flex: 1,
+                                        maxWidth: 400,
+                                        borderRadius: '16px',
+                                        border: '2px dashed rgba(59, 30, 84, 0.1)',
+                                        background: 'rgba(59, 30, 84, 0.02)',
+                                    }}
+                                >
                                     <input
                                         type="file"
                                         accept="video/*"
@@ -352,12 +405,21 @@ const VideoSummarizer = () => {
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
                                         fullWidth
-                                        sx={{ height: 40 }}
+                                        sx={{
+                                            height: 48,
+                                            borderRadius: '12px',
+                                            lineHeight: 1,
+                                            bgcolor: '#3B1E54',
+                                            '&:hover': {
+                                                bgcolor: '#4B2E64'
+                                            }
+                                        }}
                                     >
                                         {uploading ? 'Transforming Knowledge...' : 'Upload Video Lecture'}
                                     </Button>
                                 </Paper>
                             )}
+
                             {videoSource === 'youtube' && (
                                 <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
                                     <TextField
@@ -367,22 +429,49 @@ const VideoSummarizer = () => {
                                         value={youtubeUrl}
                                         onChange={(e) => setYoutubeUrl(e.target.value)}
                                         placeholder="https://www.youtube.com/watch?v=..."
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '12px',
+                                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'rgba(59, 30, 84, 0.4)'
+                                                }
+                                            }
+                                        }}
                                     />
                                     <Button
                                         variant="contained"
                                         onClick={handleYoutubeUrlSubmit}
                                         disabled={!youtubeUrl || uploading}
-                                        sx={{ height: 40 }}
+                                        sx={{
+                                            height: 40,
+                                            borderRadius: '12px',
+                                            bgcolor: '#3B1E54',
+                                            lineHeight: 1,
+                                            '&:hover': {
+                                                bgcolor: '#4B2E64'
+                                            }
+                                        }}
                                     >
                                         Load Video
                                     </Button>
                                 </Box>
                             )}
+
                             <Button
                                 variant="outlined"
                                 startIcon={<HistoryIcon />}
                                 onClick={() => setShowHistory(!showHistory)}
-                                sx={{ height: 40, minWidth: 100 }}
+                                sx={{
+                                    height: 40,
+                                    minWidth: 100,
+                                    borderRadius: '12px',
+                                    borderColor: '#3B1E54',
+                                    color: '#3B1E54',
+                                    '&:hover': {
+                                        borderColor: '#4B2E64',
+                                        bgcolor: 'rgba(59, 30, 84, 0.04)'
+                                    }
+                                }}
                             >
                                 Archives
                             </Button>
@@ -390,24 +479,39 @@ const VideoSummarizer = () => {
 
                         {videoSource === 'youtube' && showPreview && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                                <Accordion sx={{
-                                    mt: 2,
-                                    maxWidth: '600px',
-                                    width: '100%',
-                                    mb: 4
-                                }}>
+                                <Accordion
+                                    sx={{
+                                        mt: 2,
+                                        maxWidth: '600px',
+                                        width: '100%',
+                                        mb: uploading ? 0 : 4,
+                                        borderRadius: '16px !important',
+                                        overflow: 'hidden',
+                                        border: '1px solid rgba(59, 30, 84, 0.1)',
+                                        '&:before': {
+                                            display: 'none'
+                                        }
+                                    }}
+                                >
                                     <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
+                                        expandIcon={<ExpandMoreIcon sx={{ color: '#3B1E54' }} />}
                                         sx={{
                                             minHeight: '48px',
+                                            bgcolor: 'rgba(59, 30, 84, 0.02)',
                                             '& .MuiAccordionSummary-content': {
-                                                margin: '8px 0',
+                                                margin: '12px 0',
                                                 display: 'flex',
                                                 justifyContent: 'center'
                                             }
                                         }}
                                     >
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                                        <Typography
+                                            variant="subtitle1"
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: '#3B1E54'
+                                            }}
+                                        >
                                             {videoDetails?.title || 'Video Preview'}
                                         </Typography>
                                     </AccordionSummary>
@@ -415,11 +519,15 @@ const VideoSummarizer = () => {
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
+                                        p: 3
                                     }}>
                                         <Box sx={{
                                             width: '100%',
                                             maxWidth: '500px',
-                                            aspectRatio: '16/9'
+                                            aspectRatio: '16/9',
+                                            borderRadius: '12px',
+                                            overflow: 'hidden',
+                                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
                                         }}>
                                             <ReactPlayer
                                                 url={youtubeUrl}
@@ -431,7 +539,17 @@ const VideoSummarizer = () => {
                                         <Button
                                             variant="contained"
                                             onClick={handleProcessYoutube}
-                                            sx={{ mt: 2, maxWidth: '500px', width: '100%' }}
+                                            sx={{
+                                                mt: 3,
+                                                maxWidth: '500px',
+                                                width: '100%',
+                                                borderRadius: '12px',
+                                                bgcolor: '#3B1E54',
+                                                py: 1.5,
+                                                '&:hover': {
+                                                    bgcolor: '#4B2E64'
+                                                }
+                                            }}
                                         >
                                             Process This Video
                                         </Button>
@@ -441,15 +559,21 @@ const VideoSummarizer = () => {
                         )}
 
 
+
                         {uploading && (
                             <Box sx={{
                                 width: '100%',
                                 maxWidth: 600,
                                 mx: 'auto',
+                                mt: 2, // Reduced margin when accordion is collapsed
                                 mb: 2,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 2
+                                gap: 2,
+                                p: 3,
+                                borderRadius: '16px',
+                                bgcolor: 'rgba(59, 30, 84, 0.02)',
+                                border: '1px solid rgba(59, 30, 84, 0.1)'
                             }}>
                                 <LinearProgress
                                     variant="determinate"
@@ -457,21 +581,55 @@ const VideoSummarizer = () => {
                                     sx={{
                                         flexGrow: 1,
                                         height: 8,
-                                        borderRadius: 4
+                                        borderRadius: 4,
+                                        bgcolor: 'rgba(59, 30, 84, 0.1)',
+                                        '& .MuiLinearProgress-bar': {
+                                            bgcolor: '#3B1E54',
+                                            backgroundImage: 'linear-gradient(45deg, #3B1E54, #5E2E87)'
+                                        }
                                     }}
                                 />
-                                <Typography variant="body2" color="primary" sx={{ minWidth: 200 }}>
-                                    {uploadProgress < 25 && "🎥 Extracting Audio..."}
-                                    {uploadProgress >= 25 && uploadProgress < 50 && "🔊 Processing Speech..."}
-                                    {uploadProgress >= 50 && uploadProgress < 75 && "✨ Generating Summary..."}
-                                    {uploadProgress >= 75 && "🧠 Finalizing..."}
-                                </Typography>
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    minWidth: 200,
+                                    color: '#3B1E54',
+                                    fontWeight: 500
+                                }}>
+                                    {uploadProgress < 25 && (
+                                        <>
+                                            <CloudDownloadIcon />
+                                            <Typography>Extracting Audio</Typography>
+                                        </>
+                                    )}
+                                    {uploadProgress >= 25 && uploadProgress < 50 && (
+                                        <>
+                                            <AudiotrackIcon />
+                                            <Typography>Processing Speech</Typography>
+                                        </>
+                                    )}
+                                    {uploadProgress >= 50 && uploadProgress < 75 && (
+                                        <>
+                                            <SummarizeIcon />
+                                            <Typography>Generating Summary</Typography>
+                                        </>
+                                    )}
+                                    {uploadProgress >= 75 && (
+                                        <>
+                                            <DoneIcon />
+                                            <Typography>Finalizing</Typography>
+                                        </>
+                                    )}
+                                </Box>
                             </Box>
                         )}
+
                         <Box sx={{
                             display: 'flex',
                             gap: 2,
-                            mt: 2,
+                            mt: 3,
+                            flexWrap: { xs: 'wrap', md: 'nowrap' },
                             justifyContent: 'center',
                             alignItems: 'center'
                         }}>
@@ -480,8 +638,19 @@ const VideoSummarizer = () => {
                                 value={noteTitle}
                                 onChange={(e) => setNoteTitle(e.target.value)}
                                 size="small"
-                                sx={{ width: 250 }}
                                 required
+                                sx={{
+                                    width: { xs: '100%', md: 250 },
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px',
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: 'rgba(59, 30, 84, 0.4)'
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: '#3B1E54'
+                                    }
+                                }}
                             />
 
                             <TextField
@@ -490,7 +659,18 @@ const VideoSummarizer = () => {
                                 value={selectedRoom}
                                 onChange={(e) => setSelectedRoom(e.target.value)}
                                 size="small"
-                                sx={{ width: 180 }}
+                                sx={{
+                                    width: { xs: '100%', md: 180 },
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px',
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: 'rgba(59, 30, 84, 0.4)'
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: '#3B1E54'
+                                    }
+                                }}
                             >
                                 {rooms.map(room => (
                                     <MenuItem key={room._id} value={room._id}>
@@ -505,8 +685,19 @@ const VideoSummarizer = () => {
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
                                 size="small"
-                                sx={{ width: 180 }}
                                 disabled={!selectedRoom}
+                                sx={{
+                                    width: { xs: '100%', md: 180 },
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px',
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: 'rgba(59, 30, 84, 0.4)'
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: '#3B1E54'
+                                    }
+                                }}
                             >
                                 {courses.map(course => (
                                     <MenuItem key={course._id} value={course._id}>
@@ -521,10 +712,19 @@ const VideoSummarizer = () => {
                                 onClick={handleSaveContent}
                                 startIcon={<SaveIcon />}
                                 sx={{
-                                    width: 150,
-                                    bgcolor: isSaved ? 'success.main' : 'primary.main',
-                                    '&:disabled': {
-                                        bgcolor: isSaved ? 'success.light' : undefined
+                                    width: { xs: '100%', md: 150 },
+                                    height: 40,
+                                    borderRadius: '12px',
+                                    bgcolor: isSaved ? '#2E7D32' : '#3B1E54',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        bgcolor: isSaved ? '#1B5E20' : '#4B2E64',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 4px 12px rgba(59, 30, 84, 0.2)'
+                                    },
+                                    '&.Mui-disabled': {
+                                        bgcolor: isSaved ? '#2E7D32' : 'rgba(59, 30, 84, 0.12)',
+                                        color: 'white'
                                     }
                                 }}
                             >
@@ -535,33 +735,87 @@ const VideoSummarizer = () => {
                     </Paper>
 
                     {showHistory && (
-                        <Box sx={{ mb: 4 }}>
-                            <Typography variant="h5" gutterBottom>Knowledge Archive</Typography>
+                        <Box sx={{ mb: 4, width: '100%' }}>
+                            <Typography variant="h5" sx={{
+                                mb: 3,
+                                fontWeight: 600,
+                                color: '#3B1E54',
+                                position: 'relative',
+                                '&:after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    bottom: -8,
+                                    left: 0,
+                                    width: '40px',
+                                    height: '3px',
+                                    background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                    borderRadius: '2px'
+                                }
+                            }}>
+                                Knowledge Archive
+                            </Typography>
                             <Grid container spacing={2}>
                                 {videoHistory.map((video) => (
                                     <Grid item xs={12} md={6} key={video._id}>
                                         <Paper
+                                            elevation={0}
                                             sx={{
-                                                p: 2,
-                                                transition: 'transform 0.2s',
+                                                p: 3,
+                                                borderRadius: '16px',
+                                                border: '1px solid rgba(59, 30, 84, 0.1)',
+                                                transition: 'all 0.3s ease',
                                                 '&:hover': {
                                                     transform: 'translateY(-4px)',
-                                                    boxShadow: 3
+                                                    boxShadow: '0 8px 24px rgba(59, 30, 84, 0.12)'
                                                 }
                                             }}
                                         >
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}>
                                                 <Box>
-                                                    <Typography variant="h6">{video.fileName}</Typography>
-                                                    <Typography variant="caption" color="text.secondary">
+                                                    <Typography
+                                                        variant="h6"
+                                                        sx={{
+                                                            color: '#3B1E54',
+                                                            fontWeight: 600,
+                                                            mb: 0.5
+                                                        }}
+                                                    >
+                                                        {video.fileName}
+                                                    </Typography>
+                                                    <Typography
+                                                        variant="caption"
+                                                        sx={{
+                                                            color: 'rgba(59, 30, 84, 0.6)'
+                                                        }}
+                                                    >
                                                         Processed on {new Date(video.createdAt).toLocaleDateString()}
                                                     </Typography>
                                                 </Box>
-                                                <Box>
-                                                    <IconButton onClick={() => setProcessedData(video)}>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <IconButton
+                                                        onClick={() => setProcessedData(video)}
+                                                        sx={{
+                                                            color: '#3B1E54',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(59, 30, 84, 0.08)'
+                                                            }
+                                                        }}
+                                                    >
                                                         <DownloadIcon />
                                                     </IconButton>
-                                                    <IconButton onClick={() => handleDeleteVideo(video._id)} color="error">
+                                                    <IconButton
+                                                        onClick={() => handleDeleteVideo(video._id)}
+                                                        sx={{
+                                                            color: '#FF5252',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(255, 82, 82, 0.08)'
+                                                            }
+                                                        }}
+                                                    >
                                                         <DeleteIcon />
                                                     </IconButton>
                                                 </Box>
@@ -574,13 +828,35 @@ const VideoSummarizer = () => {
                     )}
 
                     {processedData && (
-                        <Paper sx={{ p: 3 }}>
-                            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                        <Paper
+                            elevation={0}
+                            sx={{
+                                p: 4,
+                                borderRadius: '20px',
+                                border: '1px solid rgba(59, 30, 84, 0.1)',
+                                boxShadow: '0 4px 20px rgba(59, 30, 84, 0.05)'
+                            }}
+                        >
+                            <Box sx={{
+                                borderBottom: '1px solid rgba(59, 30, 84, 0.1)',
+                                mb: 3
+                            }}>
                                 <Tabs
                                     value={currentTab}
                                     onChange={(e, v) => setCurrentTab(v)}
                                     variant="scrollable"
                                     scrollButtons="auto"
+                                    sx={{
+                                        '& .MuiTab-root': {
+                                            color: 'rgba(59, 30, 84, 0.6)',
+                                            '&.Mui-selected': {
+                                                color: '#3B1E54'
+                                            }
+                                        },
+                                        '& .MuiTabs-indicator': {
+                                            bgcolor: '#3B1E54'
+                                        }
+                                    }}
                                 >
                                     <Tab label="Summary" />
                                     <Tab label="Enhanced Notes" />
@@ -593,13 +869,32 @@ const VideoSummarizer = () => {
                                 {currentTab === 1 && (
                                     <IconButton
                                         onClick={downloadNotes}
-                                        sx={{ position: 'absolute', right: 0, top: -40 }}
+                                        sx={{
+                                            position: 'absolute',
+                                            right: 0,
+                                            top: -40,
+                                            color: '#3B1E54',
+                                            '&:hover': {
+                                                bgcolor: 'rgba(59, 30, 84, 0.08)'
+                                            }
+                                        }}
                                     >
                                         <DownloadIcon />
                                     </IconButton>
                                 )}
 
-                                <Box sx={{ p: 2 }}>
+                                <Box sx={{
+                                    p: 2,
+                                    '& .note-content': {
+                                        color: '#2A2A2A',
+                                        lineHeight: 1.6,
+                                        '& h1, h2, h3, h4, h5, h6': {
+                                            color: '#3B1E54',
+                                            fontWeight: 600,
+                                            mb: 2
+                                        }
+                                    }
+                                }}>
                                     {currentTab === 0 && (
                                         <div dangerouslySetInnerHTML={{ __html: cleanHtmlContent(processedData.summary) }} />
                                     )}
@@ -610,7 +905,9 @@ const VideoSummarizer = () => {
                                         <div dangerouslySetInnerHTML={{ __html: cleanHtmlContent(processedData.keyPoints) }} />
                                     )}
                                     {currentTab === 3 && (
-                                        <Typography>{processedData.transcription}</Typography>
+                                        <Typography sx={{ lineHeight: 1.8, color: '#2A2A2A' }}>
+                                            {processedData.transcription}
+                                        </Typography>
                                     )}
                                 </Box>
                             </Box>
@@ -622,10 +919,21 @@ const VideoSummarizer = () => {
                         autoHideDuration={6000}
                         onClose={() => setSnackbar({ ...snackbar, open: false })}
                     >
-                        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                        <Alert
+                            severity={snackbar.severity}
+                            onClose={() => setSnackbar({ ...snackbar, open: false })}
+                            sx={{
+                                borderRadius: '12px',
+                                '& .MuiAlert-icon': {
+                                    color: snackbar.severity === 'success' ? '#2E7D32' : '#d32f2f'
+                                }
+                            }}
+                        >
                             {snackbar.message}
                         </Alert>
                     </Snackbar>
+
+
                 </Box>
             </Container>
         </Box>

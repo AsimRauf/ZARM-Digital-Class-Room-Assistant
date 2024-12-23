@@ -8,14 +8,19 @@ import {
     Container,
     Link,
     IconButton,
-    InputAdornment
+    InputAdornment,
+    Slide,
+    Fade
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SchoolIcon from '@mui/icons-material/School';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import WavingHandIcon from '@mui/icons-material/WavingHand';
 
-const Login = () => {
+const LoginForm = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -42,105 +47,191 @@ const Login = () => {
     };
 
     return (
-        <Container component="main" maxWidth="xs">
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-            >
-                <Paper
-                    elevation={6}
-                    sx={{
+        <Box sx={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #3B1E54 0%, #5E2E87 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'url("/path-to-pattern.svg")', // Add subtle pattern
+                opacity: 0.05,
+                animation: 'float 20s infinite linear',
+            }
+        }}>
+            <Container maxWidth="xs">
+                <Slide direction="up" in={true} timeout={800}>
+                    <Paper elevation={24} sx={{
                         p: 4,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        background: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: '24px',
+                        background: 'rgba(255, 255, 255, 0.95)',
                         backdropFilter: 'blur(10px)',
-                        borderRadius: 3
-                    }}
-                >
-                    <SchoolIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
-                    <Typography component="h1" variant="h4" sx={{ mb: 3, fontWeight: 'bold', color: 'primary.main' }}>
-                        Welcome Back!
-                    </Typography>
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        boxShadow: '0 8px 32px rgba(59, 30, 84, 0.2)',
+                    }}>
+                        <Fade in={true} timeout={1200}>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                            }}>
+                                <Box sx={{
+                                    width: 80,
+                                    height: 80,
+                                    borderRadius: '20px',
+                                    background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mb: 3,
+                                    animation: 'pulse 2s infinite',
+                                    '@keyframes pulse': {
+                                        '0%': { transform: 'scale(1)' },
+                                        '50%': { transform: 'scale(1.05)' },
+                                        '100%': { transform: 'scale(1)' }
+                                    }
+                                }}>
+                                    <SchoolIcon sx={{ fontSize: 40, color: 'white' }} />
+                                </Box>
 
-                    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            label="Email Address"
-                            autoComplete="email"
-                            autoFocus
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            sx={{ mb: 2 }}
-                        />
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            label="Password"
-                            type={showPassword ? 'text' : 'password'}
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton onClick={() => setShowPassword(!showPassword)}>
-                                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{ mb: 3 }}
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{
-                                mt: 2,
-                                mb: 3,
-                                py: 1.5,
-                                fontSize: '1.1rem',
-                                borderRadius: 2,
-                                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                                '&:hover': {
-                                    background: 'linear-gradient(45deg, #21CBF3 30%, #2196F3 90%)',
-                                }
-                            }}
-                        >
-                            Sign In
-                        </Button>
-                    </form>
+                                <Typography variant="h4" sx={{
+                                    mb: 1,
+                                    fontWeight: 700,
+                                    color: '#3B1E54',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1
+                                }}>
+                                    Welcome Back <WavingHandIcon sx={{ color: '#FFD700' }} />
+                                </Typography>
 
-                    <Typography variant="body1" sx={{ mt: 2 }}>
-                        Don't have an account?{' '}
-                        <Link
-                            onClick={() => navigate('/register')}
-                            sx={{
-                                cursor: 'pointer',
-                                color: 'primary.main',
-                                textDecoration: 'none',
-                                fontWeight: 'bold',
-                                '&:hover': {
-                                    textDecoration: 'underline'
-                                }
-                            }}
-                        >
-                            Sign Up
-                        </Link>
-                    </Typography>
-                </Paper>
-            </Box>
-        </Container>
+                                <Typography variant="body1" sx={{
+                                    mb: 4,
+                                    color: 'text.secondary',
+                                    textAlign: 'center'
+                                }}>
+                                    Sign in to continue your learning journey
+                                </Typography>
+
+                                <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Email Address"
+                                        variant="outlined"
+                                        required
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        sx={{
+                                            mb: 3,
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '12px',
+                                            }
+                                        }}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <EmailIcon sx={{ color: '#3B1E54' }} />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+
+                                    <TextField
+                                        fullWidth
+                                        label="Password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        sx={{
+                                            mb: 4,
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '12px',
+                                            }
+                                        }}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <LockIcon sx={{ color: '#3B1E54' }} />
+                                                </InputAdornment>
+                                            ),
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        edge="end"
+                                                    >
+                                                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+
+                                    <Button
+                                        type="submit"
+                                        fullWidth
+                                        variant="contained"
+                                        sx={{
+                                            py: 1.5,
+                                            borderRadius: '12px',
+                                            fontSize: '1.1rem',
+                                            fontWeight: 600,
+                                            background: 'linear-gradient(45deg, #3B1E54, #5E2E87)',
+                                            boxShadow: '0 4px 15px rgba(59, 30, 84, 0.25)',
+                                            transition: 'all 0.3s ease',
+                                            '&:hover': {
+                                                transform: 'translateY(-2px)',
+                                                boxShadow: '0 8px 20px rgba(59, 30, 84, 0.3)',
+                                            }
+                                        }}
+                                    >
+                                        Sign In
+                                    </Button>
+                                </form>
+
+                                <Typography sx={{ mt: 4, textAlign: 'center' }}>
+                                    Don't have an account?{' '}
+                                    <Link
+                                        onClick={() => navigate('/register')}
+                                        sx={{
+                                            color: '#3B1E54',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            textDecoration: 'none',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                width: '0%',
+                                                height: '2px',
+                                                bottom: -2,
+                                                left: 0,
+                                                background: '#3B1E54',
+                                                transition: 'width 0.3s ease'
+                                            },
+                                            '&:hover::after': {
+                                                width: '100%'
+                                            }
+                                        }}
+                                    >
+                                        Sign Up
+                                    </Link>
+                                </Typography>
+                            </Box>
+                        </Fade>
+                    </Paper>
+                </Slide>
+            </Container>
+        </Box>
     );
 };
 
-export default Login;
+export default LoginForm;

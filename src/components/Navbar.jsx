@@ -8,7 +8,6 @@ import {
     MenuItem,
     Avatar,
     Box,
-    Drawer,
     List,
     ListItem,
     ListItemIcon,
@@ -30,6 +29,7 @@ import { useNavigate } from 'react-router-dom';
 const Navbar = ({ userData }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
+    const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     const aiTools = [
@@ -63,13 +63,26 @@ const Navbar = ({ userData }) => {
         setAnchorEl(event.currentTarget);
     };
 
+    const handleMenuOpen = (event) => {
+        setMenuAnchorEl(event.currentTarget);
+        setDrawerOpen(true);
+        document.body.style.overflow = 'auto';
+    };
+
     const handleClose = () => {
         setAnchorEl(null);
+
+    };
+
+    const handleMenuClose = () => {
+        setMenuAnchorEl(null);
+        setDrawerOpen(false);
+        setDrawerOpen(false);
+        document.body.style.overflow = '';
     };
 
     const handleFilesClick = () => {
         navigate('/files');
-        // Force a refresh of the FileSystem component
         window.location.pathname = '/files';
     };
 
@@ -80,27 +93,66 @@ const Navbar = ({ userData }) => {
 
     return (
         <>
-            <AppBar position="static">
-                <Toolbar>
+            <AppBar
+                position="fixed"
+                sx={{
+                    background: '#3B1E54',
+                    margin: '16px auto',
+                    maxWidth: '90%',
+                    borderRadius: '30px',
+                    width: '1400px',
+                    boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                    backdropFilter: 'blur(8px)',
+                    backgroundColor: 'rgba(59, 30, 84, 0.95)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                }}
+            >
+                <Toolbar sx={{
+                    minHeight: '64px',
+                    padding: '0 24px',
+                }}>
                     <IconButton
                         edge="start"
                         color="inherit"
-                        onClick={() => setDrawerOpen(true)}
+                        onClick={handleMenuOpen}
+                        sx={{
+                            marginRight: 2,
+                            '&:hover': {
+                                background: 'rgba(255, 255, 255, 0.1)',
+                            }
+                        }}
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        ZARM EduSpace
+
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            flexGrow: 1,
+                            fontWeight: 600,
+                            background: 'linear-gradient(45deg, #fff, #e0e0e0)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}
+                    >
+                        ZARM
                     </Typography>
+
                     {userData && (
-                        <div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                             <IconButton
                                 color="inherit"
                                 onClick={() => navigate('/')}
-                                sx={{ ml: 2 }}
                             >
                                 <HomeIcon />
-                                <Typography variant="subtitle1" sx={{ ml: 1 }}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
+                                        ml: 1,
+                                        display: { xs: 'none', sm: 'block' }
+                                    }}
+                                >
                                     Rooms
                                 </Typography>
                             </IconButton>
@@ -108,10 +160,15 @@ const Navbar = ({ userData }) => {
                             <IconButton
                                 color="inherit"
                                 onClick={handleFilesClick}
-                                sx={{ ml: 2 }}
                             >
                                 <FolderIcon />
-                                <Typography variant="subtitle1" sx={{ ml: 1 }}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
+                                        ml: 1,
+                                        display: { xs: 'none', sm: 'block' }
+                                    }}
+                                >
                                     Files
                                 </Typography>
                             </IconButton>
@@ -136,54 +193,123 @@ const Navbar = ({ userData }) => {
                 </Toolbar>
             </AppBar>
 
-            <Drawer
-                anchor="left"
+            <Toolbar sx={{ marginBottom: '16px' }} />
+
+            <Menu
+                anchorEl={menuAnchorEl}
                 open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
+                onClose={handleMenuClose}
+                disableScrollLock // Add this property
+                slotProps={{
+                    paper: {
+                        sx: {
+                            mt: 2,
+                            ml: 2,
+                            width: 320,
+                            maxHeight: '80vh',
+                            borderRadius: '20px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                            boxShadow: '0 8px 32px rgba(59, 30, 84, 0.18)',
+                            animation: 'slideIn 0.3s ease-out',
+                            overflowY: 'auto', // Keep the menu scrollable
+                            '&::-webkit-scrollbar': {
+                                display: 'none',
+                            },
+                            scrollbarWidth: 'none',
+                            msOverflowStyle: 'none',
+                            '@keyframes slideIn': {
+                                from: { opacity: 0, transform: 'translateY(-20px)' },
+                                to: { opacity: 1, transform: 'translateY(0)' },
+                            },
+                        },
+                    },
+                }}
             >
-                <Box sx={{ width: 250 }} role="presentation">
+
+                <Box sx={{ p: 2 }}>
                     <Typography variant="subtitle2" sx={{ px: 2, py: 1, color: 'text.secondary' }}>
                         Learning Tools
                     </Typography>
-                    <List>
+                    <List sx={{
+                        '& .MuiListItem-root': {
+                            borderRadius: '12px',
+                            mb: 1,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                                backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                                transform: 'translateX(4px)'
+                            }
+                        }
+                    }}>
                         {aiTools.map((tool) => (
                             <ListItem
                                 button
                                 key={tool.name}
                                 onClick={() => {
                                     navigate(tool.path);
-                                    setDrawerOpen(false);
+                                    handleMenuClose();
                                 }}
                             >
-                                <ListItemIcon>
+                                <ListItemIcon sx={{ color: '#3B1E54' }}>
                                     {tool.icon}
                                 </ListItemIcon>
                                 <ListItemText
                                     primary={tool.name}
                                     secondary={tool.description}
+                                    primaryTypographyProps={{
+                                        fontWeight: 500,
+                                        color: '#3B1E54'
+                                    }}
+                                    secondaryTypographyProps={{
+                                        fontSize: '0.875rem',
+                                        color: 'rgba(59, 30, 84, 0.6)'
+                                    }}
                                 />
                             </ListItem>
                         ))}
                     </List>
 
-                    <Typography variant="subtitle2" sx={{ px: 2, py: 1, mt: 2, color: 'text.secondary' }}>
+                    <Typography variant="subtitle2" sx={{
+                        px: 2,
+                        py: 1,
+                        mt: 2,
+                        color: 'text.secondary',
+                        fontWeight: 500
+                    }}>
                         Assessment
                     </Typography>
-                    <ListItem disablePadding>
-                        <ListItemButton component={Link} to="/quizzes">
-                            <ListItemIcon>
+                    <ListItem
+                        disablePadding
+                        sx={{
+                            borderRadius: '12px',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                                backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                                transform: 'translateX(4px)'
+                            }
+                        }}
+                    >
+                        <ListItemButton
+                            component={Link}
+                            to="/quizzes"
+                            onClick={handleMenuClose}
+                        >
+                            <ListItemIcon sx={{ color: '#3B1E54' }}>
                                 <QuizIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Take Quiz" />
+                            <ListItemText
+                                primary="Take Quiz"
+                                primaryTypographyProps={{
+                                    fontWeight: 500,
+                                    color: '#3B1E54'
+                                }}
+                            />
                         </ListItemButton>
                     </ListItem>
                 </Box>
-            </Drawer>
+            </Menu>
         </>
     );
 };
 
 export default Navbar;
-
-
-
