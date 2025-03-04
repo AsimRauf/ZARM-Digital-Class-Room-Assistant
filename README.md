@@ -50,12 +50,12 @@ A modern web application for managing digital notes, course materials, and colla
   - Progress tracking
   - YouTube integration
 
-#### Upcoming Features
-
 - Smart Quiz Generator
   - Automatic quiz creation from notes
   - Multiple question formats
   - Difficulty levels
+
+#### Upcoming Features
 
 - Study Assistant
   - Context-aware learning support
