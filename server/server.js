@@ -80,7 +80,6 @@ app.use('/api/video', videoRoutes);
 app.use('/api/video-content', videoContentRoutes);
 app.use('/api/quiz', quizRoutes);
 
-
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
@@ -92,5 +91,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
 
 

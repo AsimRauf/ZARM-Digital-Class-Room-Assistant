@@ -189,7 +189,6 @@ exports.deleteContent = async (req, res) => {
     }
 };
 
-// Add these methods to your existing controller
 exports.getYoutubeInfo = async (req, res) => {
     try {
         const { url } = req.body;
